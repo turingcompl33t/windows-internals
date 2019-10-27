@@ -1,3 +1,7 @@
+### Windows 10 VM Hosted on Hyper-V
+
+Forthcoming.
+
 ### VMWare and Hyper-V Interoperability
 
 By default (prior to 2020) VMWare Workstation is not compatible with Hyper-V. There are a number of ways to circumvent this limitation.
@@ -26,3 +30,5 @@ The operation completed successfully.
 VirtualKD is a tool that improves kernel debugging performance for VMWare and VirtualBox.
 
 Find the product [here](http://sysprogs.com/legacy/virtualkd/).
+
+VirtualKD is legit for debugging kernels up through but not including Windows 8 / Server 2012. The tool seems to have trouble coping with driver integrity verification, even when we explicitly disable it in these newer OS versions. I have never been able to get the debugger to attach under these circumstances. 
