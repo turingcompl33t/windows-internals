@@ -1,6 +1,21 @@
 ### Windows 10 VM Hosted on Hyper-V
 
-Forthcoming.
+Create a Windows 10 ISO via the [Media Creation Tool](https://www.microsoft.com/en-us/software-download/windows10).
+
+Create a new virtual machine within Hyper-V Manager. See the **Troubleshooting** section below to address some "gotchas" that may complicate this process.
+
+**Troubleshooting**
+
+VM fails to boot from ISO
+- This happens frequently with Generation 2 VMs, unsure of the root cause
+- Create a new Generation 1 VM with the same settings and attempt to boot from the ISO
+
+"Windows Cannot Find the Software License Terms" during OS Installation
+- Reorder the IDE hardware configuration in Hyper-V Manager
+    - DVD drive with ISO is 0
+    - Hard drive with virtual hard disk is 1
+    - etc.
+- Totally ridiculous that this is a fix for this issue
 
 ### Windows 10 VM Hosted on VMWare 
 
