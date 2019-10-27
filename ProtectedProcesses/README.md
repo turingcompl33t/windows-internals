@@ -30,6 +30,8 @@ The following access rights are the only ones that may be granted for protected 
 
 **PPL vs Protected Processes**
 
+**Origins**
+
 - Protected in the same sense as protected processes
 - Different signers have different trust levels, so some PPL are more protected than others
 
