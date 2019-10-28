@@ -76,3 +76,9 @@ Legal values for the protection flag stored in the EPROCESS structure. Protectio
 ## References
 
 - Windows Internals 7th Edition Part 1 (Pages 113-120)
+- [The Evolution of Protected Processes Part 1](http://www.alex-ionescu.com/?p=97)
+- [The Evolution of Protected Processes Part 2](http://www.alex-ionescu.com/?p=116)
+- [The Evolution of Protected Processes Part 3](http://www.alex-ionescu.com/?p=146)
+- [Injecting Code into Windows Protected Processes using COM Part 1](https://googleprojectzero.blogspot.com/2018/10/injecting-code-into-windows-protected.html)
+- [Injecting Code into Windows Protected Processes using COM Part 2](https://googleprojectzero.blogspot.com/2018/11/injecting-code-into-windows-protected.html)
+- [Unknown Kown DLLs and other Code Integrity Trust Violations](http://www.alex-ionescu.com/Publications/Recon/recon2018.pdf)
