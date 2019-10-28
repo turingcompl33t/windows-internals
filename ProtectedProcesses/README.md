@@ -39,7 +39,7 @@ The following access rights are the only ones that may be granted for protected 
 
 Protected processes always trump PPL, then higher-value signer PPL have access to lower ones, but not vice versa.
 
-## Programming
+### Programming
 
 The protection level of a process impacts the DLLs it will be allowed to load. This was done explicitly to prevent things like, for example, DLL injections on protected processes that then allow the malicious injected code to run with the authority of the protected process.
 
@@ -73,7 +73,13 @@ Legal values for the protection flag stored in the EPROCESS structure. Protectio
 | PsProtectedSignerAuthenticode | 1     | Hosting DRM, loading usermode fonts |
 | PsProtectedSignerNone         | 0     | Not valid                           |
 
-## References
+**Query Protected Service Information**
+
+```
+sc qprotection <SERVICE NAME>
+```
+
+### References
 
 - Windows Internals 7th Edition Part 1 (Pages 113-120)
 - [The Evolution of Protected Processes Part 1](http://www.alex-ionescu.com/?p=97)
