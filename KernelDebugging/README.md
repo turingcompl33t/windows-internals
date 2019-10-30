@@ -17,6 +17,12 @@ VM fails to boot from ISO
     - etc.
 - Totally ridiculous that this is a fix for this issue
 
+Windbg Preview Fails to Connect to Kernel over Serial Connection
+- I frequently make the mistake of specifying the name of the COM port as the name of the pipe in the Windbg Preview interface
+- e.g. if the VM is utilizing COM1 and mapping it to a named pipe, I would attempt to connect to a kernel at `\\.\COM1`
+- Of course this fails to connect because this is not the actual named pipe identifier
+- Instead: `\\.\pipe\COM1`
+
 ### Windows 10 VM Hosted on VMWare 
 
 Create a Windows 10 ISO via the [Media Creation Tool](https://www.microsoft.com/en-us/software-download/windows10).
