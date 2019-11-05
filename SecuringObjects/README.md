@@ -66,6 +66,12 @@ Access Tokens APIs
 - LogonUser
 - CreateProcessAsUser
 - CreateProcessWithLogon
+- AdjustTokenGroups
+- AdjustTokenPrivileges
+- OpenProcessToken
+- CreateProcessWithToken
+- DuplicateToken
+- DuplicateTokenEx
 
 Token Components
 - Group SIDs -> identify the groups to which the user represented by the token belongs
