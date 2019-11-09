@@ -88,11 +88,3 @@ Credential Guard
 
 Device Guard
 - If a change to memory page protection is requested in VTL 0, it must go through VTL 1 HVCI and be checked against the policy there
-
-### Boot Process
-
-- Bootmgr.efi is validated by UEFI firmware and executed 
-- Bootmgr.efi loads and validates winload.efi 
-- Winload.efi loads and checks the VBS configuration
-- Winload.efi loads and checks Hyper-V and both secure and unsecure kernel images
-- Winload.efi exits EFI mode, hands control to Hyper-V
