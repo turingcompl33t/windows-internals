@@ -22,6 +22,19 @@ At the most general level, the Windows boot process begins with the Windows boot
 9. The boot manager stub, operating in 16-bit real mode, sets up necessary data structures, switches the processor into protected mode, and loads the remainder of the boot manager code into memory
 10. The boot manager stub transfers control to the boot manager proper
 
+The bootcode on the active partition (i.e. the system partition) is referred to as _ntfsboot.com_ by MS internally.
+
+The two halves of the Windows boot manager (initially):
+
+- _diskboot.com_ 16-bit stub at the front of the boot manager
+- _bootmgr.exe_ a compressed PE image, either 32-bit or 64-bit code, decompressed by the _diskboot.com_ stub
+
+Boot manager is loaded into memory a total of three (3) times during this initial boot procedure. This is obviously inefficient, and one among the many motivations for re-architecting the boot process.
+
+All of the BIOS services, INT 13 disk services, for example, run in 16-bit real mode. Thus, even when the OS loader _winload.exe_ is running, it is constantly having to transition the processor mode in order to make use of these services. 
+
+Another motivation for transition to EFI/UEFI firmware is the POST time required for legacy BIOS systems. Up to 20 seconds required for initial POST. The MS team felt that this was a poor user experience.
+
 ### EFI Firmware Boot
 
 If the system is configured with EFI firmware, the process to transfer control to the Windows boot manager is vastly simplified. The Windows installer adds an EFI variable to the firmware specifying the path to the EFI application that implements the boot manager:
@@ -31,6 +44,26 @@ If the system is configured with EFI firmware, the process to transfer control t
 ```
 
 The EFI firmware switches the processor into protected mode, using a flat memory model with paging disabled, and subsequently transfers control to the Windows boot manager directly.
+
+The UEFI boot manager looks at the following NVRAM variables in order to determine where it should transfer control:
+
+- `BootNext` -> a one-time setting
+- `BootOrder` -> a table of 16-bit values identifying OS boot managers (e.g. _bootmfgw.efi_)
+
+The new Windows boot manager, _bootmgfw.efi_, sits on a FAT32 formatted volume. This is dictated by the UEFI specification.
+
+Things the UEFI boot manager passes to the Windows boot manager:
+- Image Handle -> "a handle to ourself" the OS boot manager
+- System Table
+    - Boot Services
+    - Runtime Services
+
+The facilities available in the boot services table replace the old BIOS services like INT 13. 
+
+Networking services are available in the boot environment. This enables things like the network key protector unlock feature. 
+
+The final UEFI boot service invoked by the Windows boot loader is `ExitBootServices()`
+- This tells UEFI that the OS will now own the system
 
 ### The Windows Boot Manager
 
