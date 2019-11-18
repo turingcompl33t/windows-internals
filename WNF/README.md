@@ -63,3 +63,4 @@ Higher-level API:
 - [Playing with the Windows Notification Facility](https://blog.quarkslab.com/playing-with-the-windows-notification-facility-wnf.html)
 - [Find Which Process is Using the Microphone, from a Kernel-Mode Driver](https://gracefulbits.com/2018/08/13/find-which-process-is-using-the-microphone-from-a-kernel-mode-driver/)
 - [Windows Process Injection: Windows Notification Facility](https://modexp.wordpress.com/2019/06/15/4083/)
+- [WNF and Task Scheduler](https://debay.blog/2019/11/11/wnf-and-task-scheduler/)
