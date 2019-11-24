@@ -81,3 +81,28 @@ VirtualKD is a tool that improves kernel debugging performance for VMWare and Vi
 Find the product [here](http://sysprogs.com/legacy/virtualkd/).
 
 VirtualKD is legit for debugging kernels up through but not including Windows 8 / Server 2012. The tool seems to have trouble coping with driver integrity verification, even when we explicitly disable it in these newer OS versions. I have never been able to get the debugger to attach under these circumstances. 
+
+### VirtualKd-Redux
+
+VirtualKD Redux is, as the name implies, an updated and modernized version of the original VirtualKD.
+
+Download the latest release from the Github releases page [here](https://github.com/4d61726b/VirtualKD-Redux/releases).
+
+**Guest (debug target) Setup Instructions:**
+
+1. Copy the appropriate target folder to the guest
+    - `target32/` for 32-bit target system
+    - `target64/` for 64-bit target system
+2. Run `vminstall.exe`
+    - If running a Windows 10 VM, ensure "replace kdcom.dll" is checked
+3. Restart the guest VM
+4. At boot manager prompt, ensure VKD-Redux is selected, and press F8 for advanced boot options
+5. Select "Disable Driver Signature Enforcement" and proceed with boot
+
+This final step involving disabling driver signature enforcement is required each time the guest is booted to utilize VirtualKD Redux. Therefore, to save time in future kernel debugging iterations, it is recommended to make a snapshot of the guest VM at this point, once the target successfully boots.
+
+**Host (debuggee) Setup Instructions:**
+
+1. Run `vmmon.exe`
+2. Ensure the debugger path is set correctly
+3. Select "Run Debugger"
