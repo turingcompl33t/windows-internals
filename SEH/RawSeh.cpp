@@ -1,6 +1,8 @@
 // RawSeh.cpp
 // Raw SEH implementation.
 //
+// NOTE: this example assumes 32-bit x86 system
+//
 // To output a PDB file:
 //  cl.exe [compiler options] RawSeh.cpp /link /DEBUG
 //  (defaults to /DEBUG:FULL)

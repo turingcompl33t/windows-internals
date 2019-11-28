@@ -1,9 +1,13 @@
 // ScanAmsi.cpp
 // Scan a specified input string with AMSI.
+//
+// EICAR string for testing:
+//  "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
 
 #include <amsi.h>
 #include <windows.h>
 
+#include <cstdio>
 #include <iostream>
 #include <string_view>
 
@@ -119,6 +123,24 @@ VOID LogWarning(const std::string_view msg)
 
 VOID LogError(const std::string_view msg, HRESULT result)
 {
+    LPSTR reason = nullptr;
+    FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER 
+        | FORMAT_MESSAGE_FROM_SYSTEM
+        | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        result,
+        0,
+        (LPSTR) &reason,
+        0,
+        NULL
+    );
+   
     std::cout << "[!] " << msg << '\n';
-    std::cout << "\tHRESULT CODE: " << HRESULT_CODE(result) << std::endl;
+    std::cout << "[!]\tHRESULT CODE:    " << HRESULT_CODE(result) << '\n';
+    std::cout << "[!]\tHRESULT MESSAGE: " << reason << '\n';
+    std::cout << std::endl;
+
+    // FormatMessageA allocates buffer for string
+    LocalFree(reason);
 }
