@@ -164,6 +164,81 @@ Synchronization APIs related to events include:
 
 TODO
 
+### Comparing Locking Perforance: `CRITICAL_SECTION` vs Mutex
+
+As noted above, using a critical section to enforce mutual exclusion often introduces less overhead during locking operations relative to a mutex because the mutex is a kernel object. But how significant is this disparity? Empirical tests confirm: quite significant.
+
+Another important consideration is the fact that mutex performance actually degrades with increased compute resources (processor count, clock speed) while the performance of critical sections improves. Thus, critical sections may be said to be a far more scalable locking solution than mutexes.
+
+### Aside: _False Sharing_
+
+On multiprocessor systems, a phenomenon of _false sharing_ may occur when the data accessed by independent threads resides on the same cache line. That is, even though the data is local and private to each thread, the fact that the data resides on the same cache line introduces a false sharing dependency between the two sets. Such false sharing dependencies can needlessly degrade program performance as cache coherency must be maintained.
+
+Avoid false sharing dependencies by properly aligning data structures containing thread arguments on cache line boundaries.
+
+### `CRITICAL_SECTION`: Under the Hood
+
+How does the `CRITICAL_SECTION` achieve such superior performance relative to mutexes?
+
+- `EnterCriticalSection()` does an atomic bit test and set to "acquire" access to the critical section
+- If the critical section is locked when this call is made, one of two things happen:
+    - On a single processor system, the thread waits on the critical section with `WaitForSingleObject()`, this is obviously slow
+    - On a multiprocessor system, the thread may enter a tight loop and spin on the critical section lock bit for a specified number of iterations, thus never yielding the processor
+
+The reason for this distinction is that on a single processor system, there can be no other thread active to reset the critical section lock bit, so the processor must be yielded in order to allow some other thread to execute and (hopefully) exit the critical section.
+
+How do we set the critical section spin count?
+
+- At initialization time with `InitializeCriticalSectionAndSpinCount()`
+- After initialization with `SetCriticalSectionSpinCount()`
+
+### NT6 Slim Reader/Writer Locks
+
+Windows NT6 added a new synchronization primitive: the slim reader/writer lock. As the name implies, these locks may be acquired in one of two modes:
+
+- exclusive mode (write)
+- shared mode (read)
+
+SRW locks differ from critical sections in the following ways:
+
+- Small, the size of a pointer
+- Cannot be recursively acquired
+- The spin count cannot be configured
+
+The API for working with SRW locks is as follows:
+
+- `InitializeSRWLock()`
+- `AcquireSRWLockShared()`
+- `ReleaseSRWLockShared()`
+- `AcquiredSRWLockExclusive()`
+- `ReleaseSRWLockExclusive()`
+
+### Managing Thread Contention
+
+On larger systems in which a large number of threads may be created to service asynchronous tasks, enforcing mutual exclusion may become prohibitively expensive as the large number of threads impose an intolerable level of contention on the mutual exclusion primitive (e.g. mutex). There are various ways of managing such situations in mulithreaded environments to improve performance.
+
+One such method is _semaphore throttling_ in which a semaphore is used to limit the number of threads active at any one time.
+
+IO completion ports are another method for managing contention by limiting the number of threads used to execute tasks.
+
+A final option is to use the built-in Windows thread pool support. This allows the programmer to defer the work of determining the optimal number of threads needed to service tasks to the Windows executive. Each process has a dedicated thread pool, but it is also possible to create additional thread pools within a process. The thread pool API was significantly improved in NT6.
+
+### Processor Affinity
+
+Windows maintains the notion of three distinct levels of affinity mask in the system:
+
+- The system affinity mask describes all of the processors available to the system
+- The process affinity mask describes all of the processors on which the threads of a process may execute; by default it is equivalent to the system affinity mask
+- The thread affinity mask describes all of the processors on which the thread may execute; the thread affinity mask must be a subset of the process affinity mask; by default it is equivalent to the process affinity mask
+
+The APIs available for working with affinity masks include:
+
+- `GetSystemInfo()`
+- `GetProcessAffinityMask()`
+- `SetProcessAffinityMask()`
+- `SetThreadAffinityMask()`
+- `SetThreadIdealProcessor()`
+
 ### References
 
 - _Windows System Programming, 4th Edition_ Pages 259-298
