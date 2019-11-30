@@ -1,6 +1,10 @@
+// AccessTokens.cpp
+// Demo of some simple token management APIs.
+
 #include <windows.h>
 #include <sddl.h>
 #include <tchar.h>
+
 #include <iostream>
 
 void LogInfo(const std::string& str);
@@ -25,7 +29,13 @@ int _tmain()
 
 	TOKEN_TYPE TokenTypeData;
 	DWORD dwOutSize;
-	bRet = GetTokenInformation(hProcessToken, TokenType, &TokenTypeData, sizeof(TokenTypeData), &dwOutSize);
+	bRet = GetTokenInformation(
+		hProcessToken, 
+		TokenType, 
+		&TokenTypeData, 
+		sizeof(TokenTypeData), 
+		&dwOutSize
+	);
 	if (!bRet)
 	{
 		LogError("Failed to query TokeUser information", GetLastError());
