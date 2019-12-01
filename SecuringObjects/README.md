@@ -1,5 +1,116 @@
 ## Securing Windows Objects
 
+### Windows Kernel Objects Overview
+
+Windows is often described as an "object-based OS" because it exposes much of its underlying functionality to both user mode programs, kernel drivers, and internal system components through objects. In Windows, a kernel object is a single, runtime instance of a statically defined object type. An object type comprises:
+
+- a system-defined data type
+- functions that operate on instances of that type
+- a set of object attributes
+
+The attributes of an object reflect the object's current state. By design, the internals of kernel objects are opaque. Objects are allocated in system (kernel) memory and are managed by the Windows object manager.
+
+Not all data structures in Windows are represented as kernel objects. Rather, only those data structures that must be shared, protected, named, or made visible to user mode programs are made objects.
+
+**Kernel Object Components**
+
+The common components of kernel objects are :
+
+- Type
+- Name
+- Directory
+- Handle Count
+- Pointer Count
+
+The type of an object is itself a pointer to a type object. All of the object types that are exported to user space are visible via the _Winobj.exe_ tool from Sysinternals within the `ObjectTypes` namespace of the Object Manager. 
+
+Note that a kernel object has two distinct reference counts: a handle count and a reference count. An object is only ever destroyed by the object manager when both of these counts reach zero.
+
+### Kernel Object Handles
+
+Because kernel objects reside in system space, the OS must make these objects available to user space via some indirect mechanism. This is accomplished via handles (the `HANDLE` data type). A handle is simply an index into a per-process _handle table_ that logically references a kernel object that resides in system space. This method implies that kernel objects may be easily shared between processes as distinct processes may request handles to the same kernel object. Such parallel requests may be allowed or denied based on the sharing attributes of the object.
+
+A `HANDLE` is really just an opaque type that wraps a `DWORD`. Handle values begin at index 4 and increment by 4. 0 is never a valid handle value, and is often used to test for failed API calls.
+
+**Handle Internals**
+
+A handle acquired by a process points to a small data structure in system space that indirectly references the object in question. This data structure consists of the following components:
+
+- Pointer to the object header for the object
+- Access mask
+- Flags:
+    - Audit on Close: closing the handle will generate an audit message
+    - Inheritance: controls inheritance semantics
+    - Protect from Close: calls to close the handle will fail
+
+The properties of the underlying handle data structure itself may be queried and updated via the following API:
+
+- `GetHandleInformation()`
+- `SetHandleInformation()`
+
+**Pseudo-Handles**
+
+The following functions return a pseudo-handle, rather than a traditional handle to the requested object:
+
+- `GetCurrentProcess()`              -> -1
+- `GetCurrentThread()`               -> -2
+- `GetCurrentProcessToken()`         -> -4
+- `GetCurrentThreadToken()`          -> -5
+- `GetCurrentThreadEffectiveToken()` -> -6
+
+### Object Names
+
+Kernel objects are managed by the Object Manager. For objects that may be named, the names are relative to the relevant Object Manager namespace. For instance, if one uses `CreateMutex()` to create a mutex object in a regular, user mode program via local, interactive logon, the resulting object would reside under the `\Sessions\1\BasedNamedObjects` Object Manager namespace (here, the actual session number of 1 is not guaranteed, but is just there to illustrate it is NOT 0).
+
+One may also explicitly specify the fully-qualified name for an object at the time of creation. Thus, if the name of the mutex in the above call to `CreateMutex()` were `"\Global\MyMutex"`, the mutex object would be created in the Session 0 `BaseNamedObjects` Object Manager namespace, allowing the object to be shared across sessions. 
+
+### Sharing Kernel Objects
+
+There are three (3) distinct mechanisms by which kernel objects may be shared among processes:
+
+- Sharing by name
+- Sharing by inheritance
+- Duplicating handles
+
+Sharing by name is accomplished by simply having cooperating processes that create / open handles to the same kernel object by name.
+
+Duplicating handles is accomplished via the `DuplicateHandle()` API. The function call itself is straightforward, but the complication arises when the process that performs the handle duplication (on behalf of the process that wants the duplicated handle) needs to communicate the fact that it has performed this duplication to the other process. Some other IPC mechanism is required to complete the picture.
+
+### Private Object Namespaces
+
+One of the fundamental ways in which kernel objects may be secured is through limiting their visibility. The above section covers the ways in which kernel objects may be shared, the simplest of which is by accessing a named kernel object by name. However, what if one wishes to create a named kernel object and make it available for sharing only to particular cooperating processes, while hiding it from others. Private object namespaces achieve exactly this.
+
+Creating a private object namespace requires two (2) steps.
+
+First, one creates a _boundary descriptor_ object that describes the entities (by SID) that are able to access the private object namespace. Manage boundary descriptors via the following APIs:
+
+- `CreateBoundaryDescriptor()`
+- `AddSIDToBoundaryDescriptor()`
+- `AddIntegrityLabelToBoundaryDescriptor()`
+- `DeleteBoundaryDescriptor()`
+
+The boundary descriptor is then used in the following calls to create the private namespace:
+
+- `CreatePrivateNamespace()`
+- `OpenPrivateNamespace()`
+- `ClosePrivateNamespace()`
+
+Notice that both boundary descriptor objects and private namespace objects have their own "delete" functions; this is because both of these objects are not kernel objects, despite the fact that the functions that create them return handles. 
+
+Once the private namespace has been created, other processes may utilize the private namespace alias to access named kernel objects within that namespace.
+
+### Aside: Other Object Types
+
+Windows recognizes objects other than kernel objects, including _user objects_ and _GDI objects_.
+
+User objects are things like:
+
+- Windows (`HWND`)
+- Menus (`HMENU`)
+- Hooks (`HHOOK`)
+
+Accordingly, GDI objects are objects relating strictly to the graphical device interface API.
+
 ### Security Attributes
 
 Nearly all of the Windows API calls that begin with the `Create` prefix allow one to specify the security attributes of the object that is under construction. The security attributes are specified by way of a `SECURITY_ATTRIBUTES` structure.
@@ -159,6 +270,10 @@ An _access token_ is associated with a process. The token specifies the owning u
 - Higher trust SID = more powerful token
 - Listed in the kernel debugger as "TrustLevelSid" within the token object
 
+**Default Security Descriptor**
+
+One other member of an access token is a default security descriptor. This is the security descriptor that will be applied to all objects created by the process to which the token is attached in the event that a security descriptor is not explicitly specified (passing `NULL` or `nullptr` during object creation).
+
 **Kernel Debugging**
 
 - Use dt _TOKEN to view token structure
@@ -182,3 +297,4 @@ An _access token_ is associated with a process. The token specifies the owning u
 - _Windows System Programming, 4th Edition_ Pages 519-544
 - _Windows Internals, 7th Edition_ Pages 619-666
 - _Windows Internals, 7th Edition_ Pages 668-675
+- _Windows 10 System Programming_ Chapter 3
