@@ -87,7 +87,7 @@ The environment subsystem process for the Windows subsystem is the Client Server
 
 ### Windows 10 System Processes
 
-Instead of trying to write up my own (inadequate) recreation, I will instead simply link to the [Hunt Evil Poster](Local\SANS_Poster_2018_Hunt_Evil_FINAL.pdf) from SANS that beautifully describes all of the Windows 10 system processes.
+Instead of trying to write up my own (inadequate) recreation, I will instead simply link to the [Hunt Evil Poster](Local/SANS_Poster_2018_Hunt_Evil_FINAL.pdf) from SANS that beautifully describes all of the Windows 10 system processes.
 
 ### References
 
