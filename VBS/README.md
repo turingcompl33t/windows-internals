@@ -2,45 +2,34 @@
 
 Stuff and things!
 
-### Trustlet (Secure Processes)
+### VBS Overview
 
-The Secure Kernel provides fewer than 50 system calls that are accessible to Trustlets running in IUM. The purpose of this feature is to minimize the attack surface and exposure of the Secure Kernel. For this reason, many common operations (e.g. file IO, registry operations) are impossible in the context of a trustlet. Microsoft intends trustlets to serve as the "isolated work-horse backends" to more fully-featured front-end applications running at VTL 0. Trustlets communicate with their VTL 0 "agents" via ALPC.
+**What is VBS?**
 
-### Trustlet Properties
+- Windows leveraging the hypervisor (Hyper-V) to provide security guarantees beyond what the kernel can provide on its own
+- Consists of the following components
+    - Device Guard -> stronger code signing guarantees through Hypervisor Code Integrity (HVCI)
+    - Hyper Guard -> protected critical data structures and code, like Patch Guard?
+    - Credential Guard -> protects unauthorized access to credentials, protects the lsass.exe process (by running it as a trustlet in IUM?)
+    - Application Guard -> stronger sandbox for Edge
+    - Host Guardian and Shielded Fabric -> use virtual TPM to protect a VM from the infrastructure it runs on
 
-- Regular portable executable files
-- May only import a limited subset of system DLLs because they are limited in the system calls that they may perform
-- May import from an IUM-specific DLL, `Iumbase`, which implements the base IUM system API
-- Contain a special section in the binary, _.tPolicy_, that defines metadata that allows the Secure Kernel to enforce policy settings regarding VTL 0 access to the trustlet
-- Signed with a special certificate that identifies it as a trustlet 
+**How does VBS work?**
 
-Policy options that may be specified for a trustlet include:
+- Virtual trust levels (VTLs) that operate orthogonally to processor privilege levels (rings)
+Privilege levels enforce power, VTLs enforce isolation
+- VTL 0 -> normal user / kernel modes
+- VTL 1 -> isolated user mode (IUM) / secure kernel mode (SKM)
+- Separate binaries
+- Secure kernel = securekenel.exe
+- Secure _ntdll.dll_ = _iumdll.dll_, limits system calls, adds new “secure” system calls only available in VTL 1
+- Windows subsystem = _iumbase.dll_ 
+- Only specially signed binaries, trustlets, are allowed to execute in VTL 1
 
-- Enable / disable ETW tracing
-- Debugging configuration
-- Enable / disable crash dumps
-- Public key used to encrypt crash dumps
-- GUID used to identify crash dumps
-- Enabling "powerful" VTL 1 capabilities e.g. DMA, Create Secure Section API, etc.
+**Credential Guard**
 
-### System Built-in Trustlets
+- Isolates the _lsass.exe_ process by running it in IUM as _lsaiso.exe_
 
-Windows currently comes configured with the following five (5) trustlets:
+**Device Guard**
 
-- `lsalso.exe` (1): the credential and key guard trustlet
-- `vmsp.exe` (2): the vTPM trustlet
-- `Unknown` (3): the vTPM key enrollment trustlet
-- `Biolso.exe` (4): the secure biometrics trustlet
-- `Fslso.exe` (5): the secure frame server trustlet
-
-These trustlets differ in the policy options that they come configured with.
-
-### Launching a Trustlet
-
-Is this possible??
-
-### References
-
-- _Windows Internals, 7th Edition Part 1_ Pages 123-129
-- [Battle of the SKM and IUM: How Windows 10 Rewrites OS Architecture (Video)](https://www.youtube.com/watch?v=LqaWIn4y26E&t=335s)
-- [Battle of the SKM and IUM: How Windows 10 Rewrites OS Architecture (Slides)](http://www.alex-ionescu.com/blackhat2015.pdf)
+- If a change to memory page protection is requested in VTL 0, it must go through VTL 1 HVCI and be checked against the policy there

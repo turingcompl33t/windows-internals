@@ -1,4 +1,4 @@
-## Windows System Architecture: Drivers and Driver Development
+## Windows Drivers and Driver Development
 
 ### Kernel Driver Execution Contexts
 

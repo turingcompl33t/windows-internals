@@ -1,6 +1,4 @@
-## System Architecture: Windows Subsystem for Linux (WSL)
-
-### Overview
+## Windows Subsystem for Linux (WSL)
 
 Thus far, two distinct generations of WSL:
 
