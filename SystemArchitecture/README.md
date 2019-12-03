@@ -6,7 +6,7 @@ Obligatory overview of Windows system architecture.
 
 It is difficult to find a more succinct overview of Windows system architecture than this image.
 
-![SystemArchitecture](Local\SystemArchitecture.png)
+![SystemArchitecture](Local/SystemArchitecture.png)
 
 ### User Mode Processes
 
