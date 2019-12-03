@@ -1,5 +1,21 @@
 ## Windows Drivers and Driver Development
 
+### Build Environments
+
+**Driver Development Kit (DDK)**
+
+The DDK is the now-deprecated name for the Windows driver development kit. The name was changed to the WDK with the release of Windows Vista.
+
+**Windows Driver Kit (WDK)**
+
+WDK is the new name for the Windows driver development kit (changed in Vista).
+
+The WDK is a software toolset that enables device driver development. It includes documentation, samples, build environments, and developer tools. However, it does not include a compiler implementation, Visual Studio build tools, or the Windows SDK, all of which are required to develop Windows drivers.
+
+**Enterprise Windows Driver Kit (EWDK)**
+
+The EWDK is a standalone, self-contained command line environment for building drivers. It includes the Visual Studio build tools, the SDK, and the WDK. That is, in contrast to the WDK, it does not require separate installation and configuration of Visual Studio to be a fully-functional driver development environment.
+
 ### Kernel Driver Execution Contexts
 
 Kernel mode drivers execute in one of the three following contexts:
@@ -21,6 +37,8 @@ Windows generally recognizes the following "types" of device drivers:
 - Software drivers
 
 ### High-Level Overview: The "Layered" Approach
+
+TODO
 
 ### NT4 Drivers
 

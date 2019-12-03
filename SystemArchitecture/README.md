@@ -2,6 +2,12 @@
 
 Obligatory overview of Windows system architecture.
 
+### System Architecture Overview
+
+It is difficult to find a more succinct overview of Windows system architecture than this image.
+
+![SystemArchitecture](Local\SystemArchitecture.png)
+
 ### User Mode Processes
 
 In general, there are four (4) types of user-mode processes on Windows:
