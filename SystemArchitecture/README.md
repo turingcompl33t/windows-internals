@@ -95,6 +95,40 @@ The environment subsystem process for the Windows subsystem is the Client Server
 
 Instead of trying to write up my own (inadequate) recreation, I will instead simply link to the [Hunt Evil Poster](Local/SANS_Poster_2018_Hunt_Evil_FINAL.pdf) from SANS that beautifully describes all of the Windows 10 system processes.
 
+**_System_**
+
+**_Secure System_**
+
+**_System Idle_**
+
+**_System Interrupts_**
+
+**_Memory Compression_**
+
+**_Registry_**
+
+**_smss.exe_**
+
+**_wininit.exe_**
+
+**_RuntimeBroker.exe_**
+
+**_taskhostw.exe_**
+
+**_winlogon.exe_**
+
+**_csrss.exe_**
+
+**_services.exe_**
+
+**_svchost.exe_**
+
+**_lsaiso.exe_**
+
+**_lsass.exe_**
+
+**_explorer.exe_**
+
 ### References
 
-
+- _Windows Internals, 7th Edition Part 1_ Pages 45-99

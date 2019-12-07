@@ -56,3 +56,5 @@ This fails to compile because a `__try` block must have one of an associated `__
 - _Windows System Programming, 4th Edition_ Pages 101-124
 - [Unwinding the Stack: Exploring How C++ Exceptions Work on Windows (Video)](https://www.youtube.com/watch?v=COEv2kq_Ht8&t=357s)
 - [Unwinding the Stack: Exploring How C++ Exceptions Work on Windows (Slides)](https://github.com/tpn/pdfs/blob/master/2018%20CppCon%20Unwinding%20the%20Stack%20-%20Exploring%20how%20C%2B%2B%20Exceptions%20work%20on%20Windows%20-%20James%20McNellis.pdf)
+- [A Crash Course on the Depths of Win32 Structured Exception Handling](http://bytepointer.com/resources/pietrek_crash_course_depths_of_win32_seh.htm)
+- [Exception Behavior - x64 Structured Exception Handling](https://www.osronline.com/article.cfm%5Earticle=469.htm)
