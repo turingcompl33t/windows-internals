@@ -19,7 +19,25 @@
 - An argument on the stack, passed by creating thread
 - Context structure with machine register values (maintained by kernel)
 
+**Non-Standard Process Types**
+
+- Protected Processes: Introduced in Windows Vista to support Digital Rights Management (DRM). The distinguishing feature of a protected process is the fact that its entire address space is locked down from inspection by other processes, including those running under an administrator token.
+- UWP Processes: Introduced in Windows 8. The distinguishing feature of UWP processes is that they host the Windows Runtime (WinRT) and run with AppContainer application sandboxing. They are typically used to host Modern Windows Applications (Windows Store apps).
+- Protected Process Light (PPL): A generalization of protected processes. PPLs introduced the ability to configure each process with different levels of protection via signers and began allowing third party applications to run in the context of PPLs.
+- Minimal Processes: Available in Windows 10 1607. A minimal processes is essentially an empty virtual address space.
+- Pico Processes: Available in Windows 10 1607. A pico process is just a minimal process that has an associated pico provider (kernel driver) to handle its system calls. WSL 1 is implemented via pico processes and providers.
+
 ### Basic Process Management
+
+**Process States**
+
+It often makes more sense to talk about _thread states_ rather than _process states_ because a process is really just a management container for threads which actually execute. Nevertheless, Task Manager reports processes in one of three (3) states:
+
+- Running
+- Suspended
+- Not Responding
+
+The precise meaning of each of these states depends upon the particular process type in question.
 
 **Creating Processes**
 
@@ -74,6 +92,12 @@ One process may wait on another process or a collection of processes to exit usi
 **Process Execution Time**
 
 One process may query the execution time of another process using the `GetProcessTimes()` function.
+
+**Viewing Imports and API Sets**
+
+If we use a tool like _dumpbin.exe_ to view the imports of a particular executable, some of the entries may appear to be strange names that do no correspond to an actual file on disk. These _API sets_ are not proper DLLs, but rather a layer of indirection between a set of functions and the library (DLL) that actually implements them. The mapping from API set to implementation may differ from image to image (which allows the same API set to map to different implementations for different images, increasing flexibility) and is stored in the process PEB.
+
+Use the _ApiSetMap.exe_ tool to dump API set to implementation mappings.
 
 **Jobs**
 
@@ -143,9 +167,87 @@ The high level flow of the `CreateProcess*()` functions is as follows:
 6. Start execution of the initial thread (unless `CREATE_SUSPENDED`)
 7. In the new process / thread context, perform user space initialization (e.g. load DLLs) and begin execution at the image entry point
 
+### Process Startup
+
+There are four (4) valid application entry points in C/C++ applications for Windows, and four (4) distinct associated C/C++ runtime entry points that are invoked by the system prior to transferring control to the application's entry point. The mapping is shown in the table below.
+
+- `main()` <- `mainCRTStartup()`: used by console applications using ASCII characters
+- `wmain()` <- `wmainCRTStartup()`: used by console applications using Unicode characters
+- `WinMain()` <- `WinMainCRTStartup()`: used by GUI applications using ASCII characters
+- `wWinMain()` <- `wWinMainCRTStartup()`: used by GUI applications using Unicode characters
+
+### Process Execution Environment
+
+**Command Line and Environment Variables**
+
+Useful APIs for working with environment variables include:
+
+- `GetEnvironmentVariable()`
+- `SetEnvironmentVariable()`
+- `ExpandEnvironmentStrings()`
+
+Useful APIs for working with the process command line include:
+
+- `GetCommandLine()`
+- `CommandLineToArgv()`
+- `CommandLineToArgvW()`
+
+**`CreateProcess()` and Failure**
+
+A call to `CreateProcess()` will return successfully within the context of the parent (creating) process once system (kernel) initialization of the process has completed. However, it is still possible for the user space initialization of the new process to fail after this report has been made. 
+
+It may be possible for this distinction to lead to synchronization or dependency issues when a child process is depended upon by a parent e.g. via `WaitForSingleObject()` on the child process handle.
+
+**Process Current Directory**
+
+The current directory of a process defines the location at which various filesystem searches originating from within the process will begin. For instance, if a full file path is excluded from a call to `CreateFile()`, the process current directory is consulted and the current directory is searched for the requested file (or a new one is created, according to the creation disposition flags).
+
+- `GetCurrentDirectory()`
+- `SetCurrentDirectory()`
+
+A related topic is the _process drive directory_ which entails determining what is meant by paths like _C:file.txt_. The system handles this by tracking the current directory for each drive via environment variables.
+
+One may utilize the `GetFullPathName()` function to query the current drive directory for any drive by specifying `<DRIVE_LETTER>:` as the first argument to the call.
+
+**Window Stations and Desktops**
+
+A _Window Station_ is kernel object that is part of a session. In turn, a _Desktop_ is an object associated with a window station that contains things like windows, menus, and hooks.
+
+A single window station may have multiple desktops.
+
+The default window station for the interactive session is _WinSta0_.
+
+Is is only possible to have a single window station associated with a session?
+
+**Specifying Process and Thread Attributes**
+
+The `STARTUPINFO` and `STARTUPINFOEX` structures are used to pass startup information and attributes to child processes created with the `CreateProcess()` API.
+
+The `STARTUPINFOEX` structure extends the `STARTUPINFO` structure by adding a `PROC_THREAD_ATTRIBUTE_LIST`. This attribute list allows for the addition of an unlimited number of attributes.
+
+```
+typedef struct _STARTUPINFOEX
+{
+    STARTUP_INFO StartupInfo;
+    PPROC_THREAD_ATTRIBUTE_LIST pAttributeList;
+} STARTUPINFOEX, *LPSTARTUPINFOEX;
+```
+
+1. Initialize the attribute list with `InitializeProcThreadAttributeList()`
+2. Add attributes with `UpdateProcThreadAttribute()`
+3. Set the `pAttributeList` member of the `STARTUPINFOEX` structure to point to the attribute list
+4. Call `CreateProcess()` with the `EXTENDED_STARTUPINFO_PRESENT` flag set, and the `STARTUPINFOEX` structure passed to the invocation
+5. Destroy the attribute list with `DeleteProcThreadAttributeList()` and deallocate the memory utilized for the attribute list
+
 ### Process Lifecycle: Process Termination
 
-A process exits gracefully by calling `ExitProcess()`. Most of the time, this function is called implicitly by the process startup code when the process's initial thread returns from the main function. Here, graceful exit entails the ability of DLLs loaded in the address space of the process to perform cleanup operations (via `DLL_PROCESS_DETACH` handlers in `DllMain()`) and that proper respect is paid to SEH termination handlers.
+A process may terminate for one of three reasons:
+
+- All of the threads executing within the process terminate
+- One of the process threads calls `ExitProcess()`
+- The process is terminated via a call to `TerminateProcess()`
+
+A process exits gracefully by calling `ExitProcess()`. Most of the time, this function is called implicitly by the process startup code (the runtime) when the process's initial thread returns from the main function. Here, graceful exit entails the ability of DLLs loaded in the address space of the process to perform cleanup operations (via `DLL_PROCESS_DETACH` handlers in `DllMain()`) and that proper respect is paid to SEH termination handlers.
 
 In contrast, a call to `TerminateProcess()` does not guarantee such a graceful exit.
 
@@ -188,7 +290,7 @@ Every process has an associated access token that encapsulates the security cont
 
 ### User Account Control (UAC)
 
-User account control (UAC) is the mechanism that Windows uses to enforce basic security segmentation, alhtough they maintain that it is not actually a "security boundary." UAC implies that users will typically run under an unprivileged (non-administrator) token, but can selectively choose to "elevate" when the rights associated with the administrator token are required to perform some operation.
+User account control (UAC) is the mechanism that Windows uses to enforce basic security segmentation, although they maintain that it is not actually a "security boundary." UAC implies that users will typically run under an unprivileged (non-administrator) token, but can selectively choose to "elevate" when the rights associated with the administrator token are required to perform some operation.
 
 Windows implements UAC by creating two tokens for administrator users during the logon process. When an administrator logs on, Windows creates the standard administrator token that encapsulates the administrator's credentials and also creates a "filtered admin" token that has many of the rights of the administrator token stripped out. Microsoft refers to this feature as "Admin Approval Mode."
 
@@ -228,6 +330,23 @@ The following functions are availbe in _advapi32.dll_; they then make an RPC cal
 
 - `CreateProcessWithTokenW()`
 - `CreateProcessWithLogonW()`
+
+**Process Enumeration**
+
+The simplest way of enumerating processes on the system is using the `EnumProcesses()` function available in `<psapi.h>`. However, this API only exposes a very limited amount of information regarding all of the processes on the system.
+
+A more robust mechanism for enumerating processes is via the "toolhelp" functions, available in the `<tlhelp32.h>` header:
+
+- `CreateToolhelp32Snapshot()`
+- `Process32First()`
+- `Process32Next()`
+
+The Windows Terminal Services (WTS) API also provides several functions that perform process enumeration. These functions are available in the `<wtsapi32.h>` header and the `wtsapi32.lib` library must be linked against in order to use them.
+
+- `WTSEnumerateProcesses()`
+- `WTSEnumerateProcessesEx()`
+
+A final option for enumerating processes is using the native API directly. The `NtQuerySystemInformation()` native API supports the querying of various system information classes, including process information. Of course, in order to use this function, one must know the structure of the `SYSTEM_PROCESS_INFORMATION` type in which it store its results.
 
 ### Process Kernel Debugger Commands
 
