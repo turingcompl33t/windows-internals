@@ -378,3 +378,4 @@ dt csrss!_CSR_PROCESS
 - _Windows System Programming, 4th Edition_ Pages 181-220
 - _Windows Internals, 7th Edition Part 1_ Pages 101-154
 - _Windows Internals, 7th Edition Part 1_ Pages 722-734
+- _Windows 10 System Programming_ Chapter 3
