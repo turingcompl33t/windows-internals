@@ -348,6 +348,8 @@ The Windows Terminal Services (WTS) API also provides several functions that per
 
 A final option for enumerating processes is using the native API directly. The `NtQuerySystemInformation()` native API supports the querying of various system information classes, including process information. Of course, in order to use this function, one must know the structure of the `SYSTEM_PROCESS_INFORMATION` type in which it store its results.
 
+Note: the [Process Hacker](https://github.com/processhacker) project maintains a collection of header files that contain function signatures and structure definitions for many of the native APIs.
+
 ### Process Kernel Debugger Commands
 
 ```
