@@ -64,7 +64,7 @@ Windows provides four objects for process and thread synchronization:
 
 The latter three in the above list are all kernel objects, while `CRITICAL_SECTION` is not a kernel object.
 
-**Critical Sections**
+### Critical Sections
 
 `CRITICAL_SECTION` objects are initialized and deleted but do not have handles associated with them and thus cannot be shared with other processes. `CRITICAL_SECTION` objects may be recursively acquired.
 
@@ -103,7 +103,7 @@ VOID LeaveCriticalSection(
     )
 ```
 
-**Mutexes**
+### Mutexes
 
 Mutexes are synchronization objects that offer additional functionality beyond that provided by `CRITICAL_SECTION`s:
 
@@ -122,7 +122,7 @@ Synchronization APIs related to mutexes include:
 - `WaitForSingleObject()`
 - `WaitForMultipleObjects()`
 
-**Semaphores**
+### Semaphores
 
 Semaphores are a slightly more complex synchronization object that maintain an internal count.
 
@@ -138,7 +138,7 @@ Synchronization APIs related to semaphores include:
 - `WaitForSingleObject()`
 - `WaitForMultipleObjects()`
 
-**Events**
+### Events
 
 Events are synchronization objects that allow multiple threads to be released from a wait simultaneously, under several distinct configuration options. Events may be classified as manual-reset or auto-reset.
 
@@ -213,6 +213,20 @@ The API for working with SRW locks is as follows:
 - `AcquiredSRWLockExclusive()`
 - `ReleaseSRWLockExclusive()`
 
+### NT6 Condition Variables
+
+Windows NT6 also added support for another useful synchronization object: the condition variable. Like `CRITICAL_SECTION` objects, condition variables (typed as `CONDITION_VARIABLE`) are user objects rather than kernel objects, implying that they present the same performance benefits over kernel synchronization objects like mutexes and events (which, as it happens, are typically combined to implement the "condition variable model").
+
+Condition variables may be utilized with either critical sections or slim reader/writer locks as the underlying mutual exclusion primitive.
+
+The API for working with Windows condition variables is as follows:
+
+- `InitializeConditionVariable()`
+- `SleepConditionVariableCS()`
+- `SleepConditionVariableSRW()`
+- `WakeConditionVariable()`
+- `WakeAllConditionVariable()`
+
 ### Managing Thread Contention
 
 On larger systems in which a large number of threads may be created to service asynchronous tasks, enforcing mutual exclusion may become prohibitively expensive as the large number of threads impose an intolerable level of contention on the mutual exclusion primitive (e.g. mutex). There are various ways of managing such situations in mulithreaded environments to improve performance.
@@ -238,6 +252,21 @@ The APIs available for working with affinity masks include:
 - `SetProcessAffinityMask()`
 - `SetThreadAffinityMask()`
 - `SetThreadIdealProcessor()`
+
+### Asynchronous Procedure Calls (APC)
+
+The synchronization mechanisms described thus far do not provide a general solution to the problem of allowing one thread to directly signal another thread. APCs fill this functionality gap by allowing one thread to queue an APC directly to another and therein specify some action that the target thread should perform.
+
+One thread queues work to another thread with the `QueueUserAPC()` function.
+
+The target thread executes any queued APCs by entering an alterable wait state, accomplished by making one of the following function calls:
+
+- `SleepEx()`
+- `WaitForSingleObjectEx()`
+- `WaitForMultipleObjectsEx()`
+- `SignalObjectAndWait()`
+
+In general, APCs are useful primitives for implementing _synchronous thread cancellation_. The cancellation is synchronous in the sense that the target thread must cooperate in the cancellation by entering an alertable wait state, at which point it executes the APC routine. Windows does not support asynchronous thread cancellation.
 
 ### References
 
