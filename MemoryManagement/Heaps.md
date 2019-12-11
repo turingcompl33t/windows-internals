@@ -88,3 +88,4 @@ Various of these APIs accept the `HEAP_NO_SERIALIZE` flag which allows the heap 
 ### References
 
 - _Windows Internals, 7th Edition Part 1_ Pages 332-348
+- _Windows System Programming, 4th Edition_ Pages 131-143
