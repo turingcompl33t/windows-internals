@@ -90,6 +90,10 @@ ASLR performs a similar procedure for randomizing the base address of all proces
 
 The Sysinternals _vmmap.exe_ utility is a great tool for exploring the virtual address space of user mode processes.
 
+### Memory Management API
+
+The Windows user mode memory management API consists of the functions provided in the `memoryapi.h` header.
+
 ### References
 
 - _Windows Internals, 7th Edition Part 1_ Pages 301-482

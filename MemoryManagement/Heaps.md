@@ -85,6 +85,13 @@ Common heap management functions include:
 
 Various of these APIs accept the `HEAP_NO_SERIALIZE` flag which allows the heap manager to skip the operations involved in synchronizing access to the heap and thereby improve performance. This is appropriate for, for example, single-threaded applications.
 
+### User-Created Heap Use Cases
+
+What are the scenarios in which it is beneficial to utilize a user-created heap?
+
+- Dedicate a heap to a single / few common allocation sizes, reducing the degree of internal fragmentation and improving the overall efficiency of heap memory consumption
+- Dedicate a heap to use by a single thread such that all access to the heap may be unserialized, avoiding the overhead of acquiring and releasing locks on each operation
+
 ### References
 
 - _Windows Internals, 7th Edition Part 1_ Pages 332-348
