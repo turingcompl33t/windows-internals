@@ -1,5 +1,5 @@
-:: build.bat
-:: Build both parent and child applications.
+:: buildInherit.bat
+:: Build the inherit applications.
 
 cl /EHsc /nologo InheritParent.cpp
 cl /EHsc /nologo InheritChild.cpp
