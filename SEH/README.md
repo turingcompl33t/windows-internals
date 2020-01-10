@@ -1,10 +1,16 @@
 ## Structured Exception Handling (SEH)
 
-### Filter Expressions
+Structured Exception Handling (SEH) is a mechanism provided by the Windows operating system for handling exceptional control flow situations.
+
+### SEH from C/C++: The Basics
+
+As the statement above suggests, SEH is an OS facility provided by Windows. From there, compilers such as MSVC provide a simplified syntax through which developers may work with this OS facility via extensions to the C/C++ languages.
+
+**Filter Expressions**
 
 Filter expressions are the expressions used to determine the behavior of an associated exception (`__except()`) block.
 
-### Leaving a `__try` Block
+**Leaving a `__try` Block**
 
 The `__try` block is exited under the following conditions:
 
@@ -18,7 +24,7 @@ The `__try` block is exited under the following conditions:
     - `__leave`
 - An exception is raised
 
-### Abnormal Termination
+**Abnormal Termination**
 
 A `__try` block is said to have been "abnormally terminated" in the event that the block is exited in any manner other than "falling through" to the termination handler. 
 
@@ -30,7 +36,7 @@ One may test the termination condition of the `__try` block by utilizing the fol
 BOOL AbnormalTermination(VOID)
 ```
 
-### Combining Exception and Termination Blocks
+**Combining Exception and Termination Blocks**
 
 The following program structure fails to compile:
 
@@ -50,6 +56,35 @@ __finally
 ```
 
 This fails to compile because a `__try` block must have one of an associated `__except` block or `__finally` block, but it cannot have both. However, one may achieve a functionally-equivalent result by nesting blocks within one another.
+
+### SEH Internals
+
+The signature for an SEH exception handler (from _excpt.h_, found in the kernel mode headers of the SDK):
+
+```
+_CRTIMP EXCEPTION_DISPOSITION 
+__cdecl __C_specific_handler (
+    _In_ struct _EXCEPTION_RECORD * ExceptionRecord,
+    _In_ void * EstablisherFrame,
+    _Inout_ struct _CONTEXT * ContextRecord,
+    _Inout_ struct _DISPATCHER_CONTEXT * DispatcherContext
+);
+```
+
+The definition of the `EXCEPTION_RECORD` structure (from _winnt.h_):
+
+```
+typedef struct _EXCEPTION_RECORD {
+    DWORD    ExceptionCode;
+    DWORD ExceptionFlags;
+    struct _EXCEPTION_RECORD *ExceptionRecord;
+    PVOID ExceptionAddress;
+    DWORD NumberParameters;
+    ULONG_PTR ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+    } EXCEPTION_RECORD;
+```
+
+As an aside, the `typedef` for the `EXCEPTION_ROUTINE` callback function type is also defined in _winnt.h_, along with the `CONTEXT` structure which represents the current thread context (e.g. register state) at the time an exception occurs.
 
 ### References
 
