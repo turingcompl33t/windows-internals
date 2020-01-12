@@ -73,6 +73,12 @@ _gdi32.dll_ exports 1016 functions. Examples include:
 
 The export examples from each subsystem DLL are illustrative of the particular role that each is meant to serve in implementing the Windows subsystem.
 
+**Aside: _kernel32.dll_ vs _kernelbase.dll_**
+
+Starting with Windows 7, Windows introduced a new layer of indirection into core system DLL export resolution and implementation in an attempt to minimize the cost to applications of requesting OS services. The _kernel32.dll_ vs _kernelbase.dll_ distinction is one such example of this change in which the _kernelbase.dll_ binary was introduced in Windows 7 and now contains the implementation of various functions from _kernel32.dll_ (as well as _advapi32.dll_). This implies that the actual function exports from _kernel32.dll_ are in fact forwarded to implementations in _kernelbase.dll_. 
+
+See the experiment "Kernel32Forwarding" for a demonstration of this behavior.
+
 ### System Support Library (ntdll.dll)
 
 The system support library, _ntdll.dll_, has the following properties:
