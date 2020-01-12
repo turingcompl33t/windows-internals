@@ -2,12 +2,11 @@
 // Demonstration of vectorization performance impact.
 //
 // Compile:
-//  cl /EHsc /std:c++17 /Qvec-report:2 AutoVectorization.cpp
+//  cl /O2 /EHsc /std:c++17 /Qvec-report:2 AutoVectorization.cpp
 //
-// TODO:
-//  - compiling with the /Qvec-report option is not displaying any output
-//    for this program, even on level 2 when both successes and failure should be reported
-//  - the loop with vectorization disabled is running faster than the non-vectorized loop...
+// Results:
+//  Inconclusive: the vectorized and non-vectorized loops complete
+//  with nearly identical performance characteristics.
 
 #include <windows.h>
 
