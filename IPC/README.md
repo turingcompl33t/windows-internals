@@ -19,6 +19,10 @@ Named pipes are significantly more powerful IPC mechanisms than their anonymous 
 
 Create a new named pipe with the `CreateNamedPipe()` function. Note that, as mentioned above, multiple independent instances of a pipe with the same name are permitted. This implies that the first call to `CreateNamedPipe()` actually creates the named pipe AND opens an instance of the pipe. Subsequent calls to this function with the same pipe name specified as an argument will only open a new instance of the existing pipe. The pipe is deleted when the last instance of the pipe is closed.
 
+Use the _pipelist.exe_ tool from Sysinternals to enumerate open named pipe instances on the local system.
+
+Use the _pipeacl.exe_ utility to enumerate the security descriptor of a specified named pipe.
+
 **Status APIs**
 
 - `GetNamedPipeHandleState()`
