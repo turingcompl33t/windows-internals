@@ -52,7 +52,7 @@ INT wmain(INT argc, PWCHAR argv[])
     if (NULL == hThread)
     {
         printf("[-] Failed to acquire handle to thread (OpenThread())\n");
-        printf("[-] GLE: %u\n", GetLastError());
+        printf("[-] GLE: %u\n", ::GetLastError());
         return STATUS_FAILURE_I;
     }
 
@@ -67,13 +67,13 @@ INT wmain(INT argc, PWCHAR argv[])
         printf("[+] Querying description for thread %u\n", ThreadId);
 
         PWSTR description;
-        result = GetThreadDescription(hThread, &description);
+        result = ::GetThreadDescription(hThread, &description);
         if (SUCCEEDED(result))
         {
             printf("[+] Got description:\n");
             printf("\t %ws\n", description);
 
-            LocalFree(description);
+            ::LocalFree(description);
         }
         else
         {
@@ -85,7 +85,7 @@ INT wmain(INT argc, PWCHAR argv[])
     {
         printf("[+] Setting description for thread %u\n", ThreadId);
 
-        result = SetThreadDescription(hThread, argv[2]);
+        result = ::SetThreadDescription(hThread, argv[2]);
         if (SUCCEEDED(result))
         {
             printf("[+] Set description\n");

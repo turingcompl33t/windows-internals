@@ -70,7 +70,7 @@ A common use case for TLS is in building thread-safe (fully-reentrant) DLLs. The
 The common Windows thread APIs discussed thus far actually present a major limitation: they are not guaranteed to produce thread-safe behavior when combined with routines provided by the C Runtime Library (CRT). The `CreateThread()` and `ExitThread()` functions do not interact properly with CRT functions. For this reason, Microsoft C (the Visual C / Visual C++ library) provides wrapper functions that handle thread creation and thread exit safely:
 
 - `_beginthreadex()`
-- `endthreadex()`
+- `_endthreadex()`
 
 There are also non-extended versions of these functions. Do not use them.
 
