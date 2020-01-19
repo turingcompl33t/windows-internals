@@ -86,6 +86,26 @@ typedef struct _EXCEPTION_RECORD {
 
 As an aside, the `typedef` for the `EXCEPTION_ROUTINE` callback function type is also defined in _winnt.h_, along with the `CONTEXT` structure which represents the current thread context (e.g. register state) at the time an exception occurs.
 
+### Console Control Handlers
+
+Console control handlers are a mechanism by which processes may register callback functions that certain special, console-related inputs are recieved by one of the threads in the process. The inputs the process may register to respond to are identified by the following five `DWORD` values:
+
+- `CTRL_C_EVENT`: indicates that the CTRL-C key sequence was entered from the keyboard
+- `CTL_CLOSE_EVENT`: indicates that the console window is being closes
+- `CTR_BREAK_EVENT`: indicates that the CTRL-Break signal was received 
+- `CTRL_LOGOFF_EVENT`: indicates that the user for the session in which the application is running is logging off
+- `CTRL_SHUTDOWN_EVENT`: indicates that the operating system is shutting down
+
+One may set and remove arbitrary console control handlers in an application through use of the `SetConsoleControlHandler()` function. The function takes a callback function as an argument that specifies the handler callback that should be added or removed:
+
+```
+BOOL HandlerCallback(DWORD)
+```
+
+The argument received by the callback function indicates the console control event that was received by the process - this value may be one of the five values enumerated above.
+
+As alluded to above, the console control handler signal is delivered on a process-basis, rather than a thread basis. A new thread is instantiated to execute any handler routines registered by threads within the process.
+
 ### References
 
 - _Windows System Programming, 4th Edition_ Pages 101-124

@@ -1,6 +1,6 @@
 ## Error Handling
 
-### Overview
+An overview of Windows error-handling related functions.
 
 ### Error Handling Functions
 
