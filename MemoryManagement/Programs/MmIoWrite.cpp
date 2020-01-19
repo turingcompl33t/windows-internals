@@ -1,9 +1,14 @@
 // MmIoWrite.cpp
 // Demonstration of using memory-mapped IO to write to a new file.
+//
+// Build:
+//  cl /EHsc /nologo /std:c++17 MmIoWrite.cpp
+
+#define UNICODE
+#define _UNICODE
 
 #include <windows.h>
 #include <tchar.h>
-
 #include <iostream>
 #include <string_view>
 
@@ -13,14 +18,19 @@ constexpr auto STATUS_FAILURE_I = 0x1;
 constexpr DWORD LowSize  = (1 << 10);
 constexpr DWORD HighSize = 0;
 
-constexpr TCHAR FILENAME[] = TEXT("C:\\Dev\\WinInternals\\MemoryManagement\\MapMe.txt");
-
 VOID LogInfo(const std::string_view msg);
 VOID LogWarning(const std::string_view msg);
 VOID LogError(const std::string_view msg);
 
-INT _tmain(INT agrc, PTCHAR argv[])
+INT _tmain(INT argc, PTCHAR argv[])
 {
+    if (argc != 2)
+    {
+        LogWarning("Error: invalid arguments");
+        LogWarning("Usage: MmIoRead.exe <FILENAME>");
+        return STATUS_FAILURE_I;
+    }
+
     HANDLE hFile       = INVALID_HANDLE_VALUE;
     HANDLE hMapping    = NULL;
     LPVOID pView       = NULL;
@@ -28,8 +38,8 @@ INT _tmain(INT agrc, PTCHAR argv[])
 
     auto status = STATUS_SUCCESS_I;
 
-    hFile = CreateFile(
-        FILENAME,               // file name
+    hFile = ::CreateFileW(
+        argv[1],                // file name
         GENERIC_READ            // desired access
         | GENERIC_WRITE,  
         0,                      // no sharing
@@ -48,7 +58,7 @@ INT _tmain(INT agrc, PTCHAR argv[])
 
     LogInfo("Successfully acquired handle to file");
 
-    hMapping = CreateFileMapping(
+    hMapping = ::CreateFileMappingW(
         hFile,
         NULL,
         PAGE_READWRITE,
@@ -66,7 +76,7 @@ INT _tmain(INT agrc, PTCHAR argv[])
 
     LogInfo("Successfully created file mapping");
 
-    pView = MapViewOfFile(
+    pView = ::MapViewOfFile(
         hMapping,            // mapping object handle
         FILE_MAP_WRITE,      // write access 
         0,                   // offset high
@@ -92,17 +102,17 @@ INT _tmain(INT agrc, PTCHAR argv[])
 CLEANUP:
     if (NULL != pView)
     {
-        UnmapViewOfFile(pView);
+        ::UnmapViewOfFile(pView);
     }
 
     if (NULL != hMapping)
     {
-        CloseHandle(hMapping);
+        ::CloseHandle(hMapping);
     }
 
     if (INVALID_HANDLE_VALUE != hFile)
     {
-        CloseHandle(hFile);
+        ::CloseHandle(hFile);
     }
 
 EXIT:

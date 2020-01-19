@@ -160,10 +160,6 @@ Synchronization APIs related to events include:
 - `ResetEvent()`
 - `PulseEvent()`
 
-### Thread Synchronization Structures
-
-TODO
-
 ### Comparing Locking Perforance: `CRITICAL_SECTION` vs Mutex
 
 As noted above, using a critical section to enforce mutual exclusion often introduces less overhead during locking operations relative to a mutex because the mutex is a kernel object. But how significant is this disparity? Empirical tests confirm: quite significant.
