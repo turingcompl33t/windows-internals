@@ -1,8 +1,8 @@
 // RaiseException.cpp
 // Demo of raising a user-defined exception.
 
-#include <cstdio>
 #include <windows.h>
+#include <cstdio>
 
 // exception code format:
 //  bits  27 - 0: error code
@@ -32,9 +32,9 @@ INT main()
     {
         RaiseException(
             ErrorCodeToExceptionCode(MyErrorCode),  // the user-defined exception code 
-            0,                                          // no flags
-            0,                                          // 0 arguments
-            NULL                                        // NULL arguments array
+            0,                                      // no flags
+            0,                                      // 0 arguments
+            NULL                                    // NULL arguments array
             );
     }
     __except(MyExceptionFilter(GetExceptionInformation()))

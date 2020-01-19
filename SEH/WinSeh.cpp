@@ -1,8 +1,8 @@
 // WinSeh.cpp
 // SEH demo utilizing the native Windows SEH syntax support.
 
-#include <cstdio>
 #include <windows.h>
+#include <cstdio>
 
 typedef INT NTAPI 
 fExceptionFilter(
@@ -36,7 +36,7 @@ INT NopExceptionFilter(EXCEPTION_POINTERS* Pointers)
     printf("AN EXCEPTION OCCURRED!\n");
 
     // "I can't handle this"
-    return ExceptionContinueSearch;
+    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 INT FixExceptionFilter(EXCEPTION_POINTERS* Pointers)
@@ -49,7 +49,7 @@ INT FixExceptionFilter(EXCEPTION_POINTERS* Pointers)
         printf("NOT A WRITE ACCESS VIOLATION\n");
 
         // not the write access violation we are looking for
-        return ExceptionContinueSearch;
+        return EXCEPTION_CONTINUE_SEARCH;
     }
 
     printf("GOT A WRITE ACCESS VIOLATION\n");
@@ -58,12 +58,12 @@ INT FixExceptionFilter(EXCEPTION_POINTERS* Pointers)
         Pointers->ExceptionRecord->ExceptionInformation[1]
         );
 
-    if (!VirtualProtect(WriteAddress, sizeof(INT), PAGE_READWRITE, nullptr))
+    if (!::VirtualProtect(WriteAddress, sizeof(INT), PAGE_READWRITE, nullptr))
     {
         // failed to fix it
-        return ExceptionContinueSearch;
+        return EXCEPTION_CONTINUE_SEARCH;
     }
 
     // fixed!
-    return ExceptionContinueExecution;
+    return EXCEPTION_CONTINUE_EXECUTION;
 }
