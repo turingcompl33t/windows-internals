@@ -11,7 +11,7 @@ Stuff and things!
     - Device Guard -> stronger code signing guarantees through Hypervisor Code Integrity (HVCI)
     - Hyper Guard -> protected critical data structures and code, like Patch Guard?
     - Credential Guard -> protects unauthorized access to credentials, protects the lsass.exe process (by running it as a trustlet in IUM?)
-    - Application Guard -> stronger sandbox for Edge
+    - Application Guard -> stronger sandbox for Edge, and continually expanding to other processes that MS deems worthy
     - Host Guardian and Shielded Fabric -> use virtual TPM to protect a VM from the infrastructure it runs on
 
 **How does VBS work?**
