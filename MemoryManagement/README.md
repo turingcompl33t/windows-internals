@@ -6,8 +6,8 @@ Memory management on Windows systems is controlled by the Memory Manager - the l
 
 Definition of some common memory management terms, some of which are Windows-specific.
 
-- _Reserved Memory_
-- _Committed Memory_
+- _Reserved Memory_: reserved memory is memory that may not be allocated to other uses, but is not yet backed by physical resources (e.g. physical memory or page file)
+- _Committed Memory_: committed memory is memory that is backed by physical resources (e.g. physical memory or page file)
 - _System Commit Limit_: the total size of all paging files plus the total amount of RAM usable by the operating system
 - _Canonical Address_: a virtual address that conforms to the limitation imposed by hardware manufacturers and memory addressing limitations; currently, modern hardware only supports 48 address lines, meaning that only the low 48 bits of a virtual address are utilized for addressing while the remaining 16 high order bits must sign extend (be set to the same value as bit 47 of the 64-bit address)
 

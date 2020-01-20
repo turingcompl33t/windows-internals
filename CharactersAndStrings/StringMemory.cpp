@@ -1,21 +1,23 @@
 // StringMemory.cpp
 // A brief look at strings under the hood.
-
-#define UNICODE
-#define _UNICODE
+//
+// Build:
+//  cl /EHsc /nologo StringMemory.cpp
 
 #include <windows.h>
 #include <string.h>
-
 #include <cstdio>
 
-INT wmain(VOID)
+constexpr auto STATUS_SUCCESS_I = 0x0;
+constexpr auto STATUS_FAILURE_I = 0x1;
+
+INT main()
 {
-    const CHAR AnsiString[] = "ABCDE" ;
+    const CHAR AnsiString[]  = "ABCDE" ;
     const WCHAR WideString[] = L"ABCDE";
 
-    const auto AnsiStringLength = strnlen_s(AnsiString, 5);
-    const auto WideStringLength = wcsnlen_s(WideString, 5);
+    const auto AnsiStringLength = strnlen_s(AnsiString, _countof(AnsiString));
+    const auto WideStringLength = wcsnlen_s(WideString, _countof(WideString));
 
     const auto& AnsiBuffer = reinterpret_cast<BYTE*>(const_cast<CHAR*>(AnsiString));
     const auto& WideBuffer = reinterpret_cast<BYTE*>(const_cast<WCHAR*>(WideString));
@@ -32,5 +34,5 @@ INT wmain(VOID)
         printf("0x%02X\n", WideBuffer[i]);
     }
 
-    return 0;
+    return STATUS_SUCCESS_I;
 }

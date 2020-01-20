@@ -43,6 +43,8 @@ As the term is commonly applied to character encodings and code pages, it is a m
 
 **American Standard Code for Information Interchange (ASCII)**
 
+TODO
+
 **UTF-7**
 
 TODO
@@ -107,7 +109,9 @@ The other set of safe string functions are those provided directly by the Window
 - `StringCchCopy()`
 - `StringCchCat()`
 
-Here, "cch" stands for "count of characters", which itself raises an important point: all buffer sizes and lengths associated with both these API sets are expressed in CHARACTERS rather than BYTES. This is obviously a critical distinction.
+Here, `Cch` stands for "count of characters", which itself raises an important point: all buffer sizes and lengths associated with both these API sets are expressed in **characters** rather than BYTES. This is obviously a critical distinction. 
+
+The `<strsafe>` header also defines analogous functions that work in terms of bytes rather than character counts. These functions are identified by the `StringCb` prefix. 
 
 ### String Conversions
 
@@ -134,3 +138,4 @@ Furthermore, the C++ standard library defines similar functions within the `std`
 
 - _Windows System Programming, 4th Edition_ Pages 34-37
 - _Windows 10 System Programming_ Chapter 1
+- [MSDN: String Conversions](https://docs.microsoft.com/en-us/windows/win32/menurc/strsafe-ovw?redirectedfrom=MSDN)
