@@ -68,14 +68,14 @@ The latter three in the above list are all kernel objects, while `CRITICAL_SECTI
 
 `CRITICAL_SECTION` objects are initialized and deleted but do not have handles associated with them and thus cannot be shared with other processes. `CRITICAL_SECTION` objects may be recursively acquired.
 
-`CRITICAL_SECTION` objects are a userspace construct and are those often more performant than the kernel synchronization objects because there is less overhead involved in acquire and release. `CRITICAL_SECTION` objects may also be tuned with an associated _spin count_ which prevents threads waiting on the `CRITICAL_SECTION` from entering the kernel and blocking - a useful tool for regions with high contention. 
+`CRITICAL_SECTION` objects are a userspace construct and are thus often more performant than the kernel synchronization objects because there is less overhead involved in acquire and release. `CRITICAL_SECTION` objects may also be tuned with an associated _spin count_ which prevents threads waiting on the `CRITICAL_SECTION` from entering the kernel and blocking - a useful tool for regions with high contention. 
 
 Limitations of `CRITICAL_SECTION` objects include:
 
 - No timeout capability (apart from spinning and manually implementing)
-- Inability to signal another thread
+- The inability to signal another thread
 
-Initialize and delete a critical section object. 
+The APIs available for initializing and deleting a critical sections include: 
 
 ```
 VOID InitializeCriticalSection(
@@ -87,7 +87,7 @@ VOID DeleteCriticalSection(
     )
 ```
 
-Enter and leave critical sections.
+The APIs available for entering and leaving critical sections include:
 
 ```
 VOID EnterCriticalSection(
@@ -125,7 +125,6 @@ Synchronization APIs related to mutexes include:
 ### Semaphores
 
 Semaphores are a slightly more complex synchronization object that maintain an internal count.
-
 - The semaphore is signaled whenever the internal count is greater than 0
 - The semaphore is unsignaled when the internal count is 0
 
@@ -175,7 +174,6 @@ Avoid false sharing dependencies by properly aligning data structures containing
 ### `CRITICAL_SECTION`: Under the Hood
 
 How does the `CRITICAL_SECTION` achieve such superior performance relative to mutexes?
-
 - `EnterCriticalSection()` does an atomic bit test and set to "acquire" access to the critical section
 - If the critical section is locked when this call is made, one of two things happen:
     - On a single processor system, the thread waits on the critical section with `WaitForSingleObject()`, this is obviously slow
