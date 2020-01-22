@@ -128,15 +128,24 @@ It is clear from the structure definition that the pointer to the security descr
 
 ### Security Descriptor
 
-Object _security descriptors_ are one side of the object security equation (the other being _access tokens_). Among other things, an object's security descriptor specifies the entities that may performa ations on an objects and which actions they may perform.
+One of the primary objectives of the Windows object model as implemented by the Object Manager is the ability to secure objects through access control. To this end, most (though not all, there are a few rare exceptions) kernel objects managed by the Windows object manager have an associated _security descriptor_ that defines the security-related context of the object in question - security descriptors are one side of the object security equation (the other being _access tokens_). Among other things, an object's security descriptor answers the question: "which security principals may perform which actions this this object?"
 
-An object security descriptor has multiple, distinct access control lists embedded within it:
+```
+typedef struct _SECURITY_DESCRIPTOR {
+  UCHAR  Revision;
+  UCHAR  Sbz1;
+  SECURITY_DESCRIPTOR_CONTROL  Control;
+  PSID  Owner;
+  PSID  Group;
+  PACL  Sacl;
+  PACL  Dacl;
+} SECURITY_DESCRIPTOR, *PISECURITY_DESCRIPTOR;
+```
 
-- _DACL_ -> discretionary access control list
-    - Access control entries in this list specify a SID and the rights granted to that SID
-- _SACL_ -> system access control list
-    - Specifies which actions by which users should be logged
-    - If a SACL is null, no auditing occurs for that object 
+The most consequential components of the security descriptor are contained in Access Control Lists (ACLs). An object security descriptor has multiple, distinct access control lists embedded within it:
+
+- Discretionary Access Control List (DACL): Access control entries in this list specify a SID and the access rights granted to that SID for the object in question; if an object's DACL is `NULL`, the object is accessible to all entities.
+- System Access Control List (SACL): Specifies which actions by which users should be logged in the system's security event log; if an object's SACL is `NULL`, no auditing occurs for that object. 
 
 A new security descriptor object may be initialized with the following APIs:
 
@@ -152,25 +161,59 @@ A new security descriptor object may be initialized with the following APIs:
 
 Notice that there is no concept of a "denied" ACE for system ACLs.
 
-The access control entries of an object's DACL and SACL are scanned sequentially by the security reference monitor when performing an access check. Therefore, the order in which ACEs are added to a security descriptor's DACL and SACL is important.
+The access control entries (ACE) of an object's DACL and SACL are scanned sequentially by the Security Reference Monitor (SRM) when performing an access check. Therefore, the order in which ACEs are added to a security descriptor's DACL and SACL is important.
 
 An ACE consists of a SID and the _access mask_ associated with that SID. The access mask specifies the access rights to be allowed or denied to the specified SID. 
 
-Mask values will vary by object type. So how do we determine the appropriate ACE mask values to apply to a given kernel object?
-
-- Read the docs (sometimes useful)
+Mask values vary by object type. Thus, one must consult one of two publicly available sources to determine the appropriate ACE mask value to apply to a given kernel object:
+- Read the MSDN documentation (sometimes useful)
 - Read header files _winnt.h_ and _winbase.h_
+
+In addition to the DACL and SACL, each security descriptor also specifies an _Owner SID_ and a _Group SID_. The owner SID identifies the owner of the object to which the security descriptor is attached. This field is consequential because only the owner of an object may edit object permissions and allow other security principals to take ownership of the object. The group SID is typically ignored.
 
 **Security Descriptor Control Flags**
 
-The control flags control the meaning assigned to the security descriptor.
+Security descriptor control flags are represented by a bitfield within the `SECURITY_DESCRIPTOR` structure.
+
+```
+typedef USHORT SECURITY_DESCRIPTOR_CONTROL, *PSECURITY_DESCRIPTOR_CONTROL;
+```
+
+The control flags control the meaning assigned to the security descriptor. For instance, the control flags for a security descriptor specify properties such as the inheritance properties of the security descriptor DACL and SACL, and whether or not the security descriptor is absolute or self-relative. The definition and meaning of each of the available control flags may be found on [MSDN](https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/security-descriptor-control).
+
+The control flags for a security descriptor may be manipulated and queried via the following APIs:
 
 - `GetSecurityDescriptorControl()`
 - `SetSecurityDescriptorControl()`
 
 In addition to the latter of the two functions above, the control bits of a security descriptor may also be modified implicitly by other security descriptor manipulation APIs.
 
-The control flags for a security descriptor specify properties such as the inheritance properties of the security descriptor DACL and SACL, and whether or not SD is absolute or self-relative.
+**Acess Control Lists (ACLs)**
+
+Access Control Lists (ACLs) are part of the mechanism by which Windows implements object security (the other major part being mandatory integrity checks). As mentioned above, an object's security descriptor defines two distinct access control lists:
+- Discretionary Access Control List (DACL)
+- System Access Control List (SACL)
+
+An object's DACL specifies which security principals (identified by SIDs) may perform which actions on the object to which the security descriptor is attached. The DACL is composed of a header and zero or more access control entries (ACEs). Each ACE specifies a SID, an access mask, and a set of flags that applies to that SID. The access mask varies based on the type of the object to which the security descriptor is attached, but generally specifies actions that may or may not be taken by the security principal identified by the associated SID (e.g. read, write, delete, etc.). The flags for the ACE specify (among other things) the type of of the ACE. There are nine distinct types of ACEs:
+- Access Allowed
+- Access Denied
+- Allowed Object
+- Denied Object
+- Allowed Callback
+- Denied Callback
+- Allowed Object Callback
+- Denied Object Callback
+- Conditional Claims
+
+There is a critical distinction between a `NULL` DACL and a DACL that defines zero ACEs: 
+- A `NULL` DACL implies that the object is accessible by any security principal
+- A DACL that defines zero ACEs implies that the object is inaccessible
+
+The implication of the latter is that an ACL always defines an implicit access denied ACE - if access is not explicitly permitted by the contents of the ACE, access is denied by default. 
+
+Much like the ACL that composes the DACL, the SACL's ACL defines ACEs that specify which operations by which security principals will be logged by the system. The ACL that composes a security descriptor's SACL defines two types of ACEs:
+- System Audit
+- System Audit-Object
 
 **Absolute vs Self-Relative Security Descriptors**
 
@@ -212,27 +255,35 @@ Further APIs exist specifically for querying the security descriptor of files:
 
 ### Security Identifier (SID)
 
-Instead of using names to identify entities which perform actions within a system, Windows uses SIDs. 
+Instead of using names to identify entities which perform actions within a system, Windows utilizes security identifiers (SIDs). A security identifier is simply a numeric value of variable length that uniquely identifies a security principal.
 
-**Which entities are issued a SID?**
+SIDs are issued to the following entities:
 
 - Users
-- Local and domain groups
-- Local computers
+- Local and Domain Groups
+- Local Computers
 - Domains
 - Domain members
 - Services
 
-**SID components**
+The components of a SID are defined as follows:
 
-- ‘S’ prefix
-- SID structure revision number
-- 48 bit authority value -> who issued the SID
-- Variable number of
-    - 32 bit sub authority values
-    - Relative identifier (RID) values
+- Structure Revision Number: identifies the version of the SID structure to which this particular SID adheres
+- Authority Value (48 bits): the authority value identifies the security authority that issued the SID; for example, typical authority values identify the Windows local system or a domain as the issuer of the SID
+- A Variable Number of
+    - Sub-Authority Values (32 bits): sub-authority values identifier security trustees relative to the primary authority identified by the authority value
+    - Relative Identifier (RID) Values: RIDs are arbitrary numeric values that are added in to ensure the uniqueness of SIDs that share the same authority and sub-authorities
+
+When SIDs are displayed in textual form, there is always an 'S' prefixed to the SID string. This prefix does not exist in the SID proper - it is merely a feature added by Windows to make SIDs more human-readable when displayed in this manner.
 
 Standard Windows APIs allow one to query the SID for a specified account name and vice versa.
+
+As the above enumeration of entities which are issued SIDs implies, SIDs are assigned to both static and dynamic entities. For instance, Windows defines a number of "well-known" SIDs that are common across all Windows systems. Examples of such well-known SIDs include:
+- `S-1-1-0`: A group SID that identifies all users except for anonymous users
+- `S-1-5-18`: The local system account
+- `S-1-5-19`: The local service account
+
+On the other hand, SIDs are also assigned to dynamic entities such as users and interactive logon sessions.
 
 ### Access Tokens (aka Tokens)
 
