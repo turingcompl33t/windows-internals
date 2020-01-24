@@ -82,17 +82,17 @@ WMI utilizes namespaces to organize the WMI system hierarchically. The root name
 - `Security`
 - `WMI`
 
-Windows defines a number of other subnamespaces that reside directly beneath the root namespace. Unlike a directory hierarchy in a filesystem, a WMI namespaces are only ever one level deep.
+Windows defines a number of other subnamespaces that reside directly beneath the root namespace. Unlike a directory hierarchy in a filesystem, WMI namespaces are only ever one level deep.
 
 ### WMI Implementation
 
-The WMI service runs in a shared `svchost` process. This service loads providers into the _Wmiprvse.exe_ provider hosting process, which is launched as a child of the RPC service process.
+The infrastructure component of WMI is implemented as a Windows service under the name _winmgmt_. The WMI service runs in a shared `svchost` process, and is automatically started by Windows on system startup. This service loads providers into the _Wmiprvse.exe_ provider hosting process, which is launched as a child of the RPC service process.
 
-Most WMI resources on a system reside in the `%SystemRoot%\System32` and `%SystemRoot%\System32\Wbem` directories. This includes resources such as MOF files and provider DLLs.
+Most WMI resources on a system reside in the `%SystemRoot%\System32` and `%SystemRoot%\System32\Wbem` directories. This includes resources such as managed object format (MOF) files and provider DLLs.
 
-The WMI repository (identical to the CIMOM repository) is implemented as a database file stored under `%SystemRoot%\System32\Wbem\Repository`. 
+The WMI repository (otherwise known as the Common Information Model Object Manager (CIMOM) repository) is implemented as a database file stored under `%SystemRoot%\System32\Wbem\Repository`. 
 
-WMI implements security at the namespace level via the standard Windows security model mechanisms (i.e. objects and security descriptors)
+WMI implements security at the namespace level via the standard Windows security model mechanisms (i.e. objects and security descriptors). 
 
 ### References
 
