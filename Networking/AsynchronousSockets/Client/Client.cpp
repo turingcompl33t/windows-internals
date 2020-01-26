@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 		return STATUS_FAILURE_I;
 	}
 
-	int status;
+	int     status;
 	WSADATA wsdata;
 	char    host[128];
 	int     port;
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 	}
 
 	server.sin_family = AF_INET;
-	server.sin_port = htons(port);
+	server.sin_port   = htons(port);
 	inet_pton(AF_INET, host, &server.sin_addr.s_addr);
 
 	if (INADDR_NONE == server.sin_addr.s_addr)

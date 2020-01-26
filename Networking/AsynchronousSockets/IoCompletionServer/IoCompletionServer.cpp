@@ -12,23 +12,21 @@
 constexpr auto STATUS_SUCCESS_I = 0x0;
 constexpr auto STATUS_FAILURE_I = 0x1;
 
-// server listen port
 constexpr auto PORT        = 8000;
-// recv buffer size
 constexpr auto BUFFER_SIZE = 512;
 
 struct IoOperationData
 {
-	OVERLAPPED ov;
-	WSABUF data;
-	CHAR buffer[BUFFER_SIZE];
-	DWORD bytesSend;
-	DWORD bytesRecv;
+	OVERLAPPED Ov;
+	WSABUF     Data;
+	CHAR       Buffer[BUFFER_SIZE];
+	DWORD      BytesSend;
+	DWORD      BytesRecv;
 };
 
 struct HandleData
 {
-	SOCKET socket;
+	SOCKET Socket;
 };
 
 DWORD WINAPI WorkerThread(LPVOID completionPortId);
@@ -40,23 +38,23 @@ void TraceErrorWSA(const char* msg, DWORD error = ::WSAGetLastError());
 
 int wmain()
 {
-	SOCKADDR_IN addr;
-	SOCKET listenSocket;
-	HANDLE hThread;
-	SOCKET acceptSocket;
-	HANDLE hCompletionPort;
-	SYSTEM_INFO info;
+	SOCKADDR_IN Addr;
+	SOCKET      ListenSocket;
+	HANDLE      hThread;
+	SOCKET      AcceptSocket;
+	HANDLE      hCompletionPort;
+	SYSTEM_INFO Info;
+
+	DWORD   RecvBytes;
+	DWORD   Flags;
+	DWORD   ThreadId;
+	WSADATA WsaData;
 	
-	HandleData* handleData;
-	IoOperationData* operationData;
+	HandleData*      hd;
+	IoOperationData* od;
+	DWORD            status;
 
-	DWORD recvBytes;
-	DWORD flags;
-	DWORD threadId;
-	WSADATA wsaData;
-	DWORD status;
-
-	if ((status = ::WSAStartup((2, 2), &wsaData)) != 0)
+	if ((status = ::WSAStartup((2, 2), &WsaData)) != 0)
 	{
 		TraceError("WSAStartup failed");
 		return STATUS_FAILURE_I;
@@ -79,10 +77,10 @@ int wmain()
 	}
 	
 	// determine the number of processors on system and create threads accordingly
-	::GetSystemInfo(&info);
-	for (unsigned i = 0; i < info.dwNumberOfProcessors*2; ++i)
+	::GetSystemInfo(&Info);
+	for (unsigned i = 0; i < Info.dwNumberOfProcessors*2; ++i)
 	{
-		hThread = ::CreateThread(nullptr, 0, WorkerThread, hCompletionPort, 0, &threadId);
+		hThread = ::CreateThread(nullptr, 0, WorkerThread, hCompletionPort, 0, &ThreadId);
 		if (NULL == hThread)
 		{
 			TraceError("CreateThread failed\n");
@@ -90,31 +88,31 @@ int wmain()
 		}
 		else
 		{
-			printf("[+] Started thread %u\n", threadId);
+			printf("[+] Started thread %u\n", ThreadId);
 		}
 
 		// TODO: why?
 		::CloseHandle(hThread);
 	}
 
-	listenSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-	if (INVALID_SOCKET == listenSocket)
+	ListenSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+	if (INVALID_SOCKET == ListenSocket)
 	{
 		TraceError("WSASocket() failed");
 		return STATUS_FAILURE_I;
 	}
 	
-	addr.sin_family      = AF_INET;
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	addr.sin_port        = htons(PORT);
+	Addr.sin_family      = AF_INET;
+	Addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	Addr.sin_port        = htons(PORT);
 
-	if (SOCKET_ERROR == bind(listenSocket, (PSOCKADDR)&addr, sizeof(addr)))
+	if (SOCKET_ERROR == bind(ListenSocket, (PSOCKADDR)&Addr, sizeof(Addr)))
 	{
 		TraceErrorWSA("bind() failed");
 		return STATUS_FAILURE_I;
 	}
 
-	if (SOCKET_ERROR == listen(listenSocket, 5))
+	if (SOCKET_ERROR == listen(ListenSocket, 5))
 	{
 		TraceErrorWSA("listen() failed");
 		return STATUS_FAILURE_I;
@@ -124,8 +122,8 @@ int wmain()
 
 	for (;;)
 	{
-		acceptSocket = WSAAccept(listenSocket, NULL, NULL, NULL, 0);
-		if (SOCKET_ERROR == acceptSocket)
+		AcceptSocket = WSAAccept(ListenSocket, NULL, NULL, NULL, 0);
+		if (SOCKET_ERROR == AcceptSocket)
 		{
 			TraceErrorWSA("WSAAccept failed");
 			return STATUS_FAILURE_I;
@@ -133,19 +131,19 @@ int wmain()
 
 		TraceInfo("Accepted new connection");
 
-		handleData = static_cast<HandleData*>(::HeapAlloc(::GetProcessHeap(), 0, sizeof(HandleData)));
-		if (nullptr == handleData)
+		hd = static_cast<HandleData*>(::HeapAlloc(::GetProcessHeap(), 0, sizeof(HandleData)));
+		if (nullptr == hd)
 		{
 			TraceError("HeapAlloc() failed");
 			return STATUS_FAILURE_I;
 		}
 
-		handleData->socket = acceptSocket;
+		hd->Socket = AcceptSocket;
 
 		if (NULL == ::CreateIoCompletionPort(
-			reinterpret_cast<HANDLE>(acceptSocket),
+			reinterpret_cast<HANDLE>(AcceptSocket),
 			hCompletionPort,
-			reinterpret_cast<ULONG_PTR>(handleData),
+			reinterpret_cast<ULONG_PTR>(hd),
 			0
 		))
 		{
@@ -153,31 +151,31 @@ int wmain()
 			return STATUS_FAILURE_I;
 		}
 
-		operationData = static_cast<IoOperationData*>(
+		od = static_cast<IoOperationData*>(
 			::HeapAlloc(::GetProcessHeap(), 0, sizeof(IoOperationData))
 			);
-		if (nullptr == operationData)
+		if (nullptr == od)
 		{
 			TraceError("HeapAlloc() failed");
 			return STATUS_FAILURE_I;
 		}
 
-		ZeroMemory(&(operationData->ov), sizeof(OVERLAPPED));
-		operationData->bytesRecv = 0;
-		operationData->bytesSend = 0;
-		operationData->data.len = BUFFER_SIZE;
-		operationData->data.buf = operationData->buffer;
+		ZeroMemory(&(od->Ov), sizeof(WSAOVERLAPPED));
+		od->BytesRecv = 0;
+		od->BytesSend = 0;
+		od->Data.len = BUFFER_SIZE;
+		od->Data.buf = od->Buffer;
 
-		flags = 0;
+		Flags = 0;
 
 		// initiate an asynchronous recv on the newly accepted socket
 		if (SOCKET_ERROR == ::WSARecv(
-			acceptSocket,
-			&(operationData->data),
+			AcceptSocket,
+			&(od->Data),
 			1,
-			&recvBytes,
-			&flags,
-			&(operationData->ov),
+			&RecvBytes,
+			&Flags,
+			&(od->Ov),
 			NULL
 		))
 		{
@@ -194,20 +192,23 @@ int wmain()
 DWORD WINAPI WorkerThread(LPVOID completionPortId)
 {
 	HANDLE hCompletionPort = static_cast<HANDLE>(completionPortId);
-	DWORD bytesTransferred;
-	HandleData* handleData;
-	IoOperationData* operationData;
-	DWORD sendBytes;
-	DWORD recvBytes;
-	DWORD flags;
+	
+	DWORD BytesTransferred;
+
+	DWORD SendBytes;
+	DWORD RecvBytes;
+	DWORD Flags;
+
+	HandleData*      hd;
+	IoOperationData* od;
 
 	for (;;)
 	{
 		if (0 == ::GetQueuedCompletionStatus(
 			hCompletionPort,
-			&bytesTransferred,
-			reinterpret_cast<PULONG_PTR>(&handleData),
-			reinterpret_cast<LPOVERLAPPED*>(&operationData),
+			&BytesTransferred,
+			reinterpret_cast<PULONG_PTR>(&hd),
+			reinterpret_cast<LPOVERLAPPED*>(&od),
 			INFINITE
 		))
 		{
@@ -216,52 +217,52 @@ DWORD WINAPI WorkerThread(LPVOID completionPortId)
 		}
 
 		// check for error
-		if (0 == bytesTransferred)
+		if (0 == BytesTransferred)
 		{
 			TraceWarning("Error occurred on socket; closing...");
-			if (SOCKET_ERROR == closesocket(handleData->socket))
+			if (SOCKET_ERROR == closesocket(hd->Socket))
 			{
 				TraceErrorWSA("closesocket() failed");
 				return STATUS_FAILURE_I;
 			}
 
-			::HeapFree(::GetProcessHeap(), 0, handleData);
-			::HeapFree(::GetProcessHeap(), 0, operationData);
+			::HeapFree(::GetProcessHeap(), 0, hd);
+			::HeapFree(::GetProcessHeap(), 0, od);
 			continue;
 		}
 
 		// no error occurred on the operation, process the completed operation
 
-		if (0 == operationData->bytesRecv)
+		if (0 == od->BytesRecv)
 		{
 			// a recv operation just completed
-			operationData->bytesRecv = bytesTransferred;
-			operationData->bytesSend = 0;
+			od->BytesRecv = BytesTransferred;
+			od->BytesSend = 0;
 		}
 		else
 		{
 			// a send operation just completed
-			operationData->bytesSend = bytesTransferred;
+			od->BytesSend = BytesTransferred;
 		}
 
-		if (operationData->bytesRecv > operationData->bytesSend)
+		if (od->BytesRecv > od->BytesSend)
 		{
 			// there remain bytes that were recved that have not yet been echoed back to client
 
-			ZeroMemory(&(operationData->ov), sizeof(OVERLAPPED));
+			ZeroMemory(&(od->Ov), sizeof(WSAOVERLAPPED));
 			// compute the location within the buffer where the send should begin
-			operationData->data.buf = operationData->buffer + operationData->bytesSend;
+			od->Data.buf = od->Buffer + od->BytesSend;
 			// compute the size of the remaining data
-			operationData->data.len = operationData->bytesRecv - operationData->bytesSend;
+			od->Data.len = od->BytesRecv - od->BytesSend;
 
 			// issue the send operation
 			if (SOCKET_ERROR == ::WSASend(
-				handleData->socket,
-				&(operationData->data),
+				hd->Socket,
+				&(od->Data),
 				1,
-				&sendBytes,
+				&SendBytes,
 				0,
-				&(operationData->ov),
+				&(od->Ov),
 				NULL
 			))
 			{
@@ -273,20 +274,20 @@ DWORD WINAPI WorkerThread(LPVOID completionPortId)
 		{
 			// a send operation has completed successfully; queue another recv
 
-			operationData->bytesRecv = 0;
+			od->BytesRecv = 0;
 
-			flags = 0;
-			ZeroMemory(&(operationData->ov), sizeof(OVERLAPPED));
-			operationData->data.len = BUFFER_SIZE;
-			operationData->data.buf = operationData->buffer;
+			Flags = 0;
+			ZeroMemory(&(od->Ov), sizeof(OVERLAPPED));
+			od->Data.len = BUFFER_SIZE;
+			od->Data.buf = od->Buffer;
 
 			if (SOCKET_ERROR == ::WSARecv(
-				handleData->socket,
-				&(operationData->data),
+				hd->Socket,
+				&(od->Data),
 				1,
-				&recvBytes,
-				&flags,
-				&(operationData->ov),
+				&RecvBytes,
+				&Flags,
+				&(od->Ov),
 				NULL
 			))
 			{
