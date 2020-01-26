@@ -36,9 +36,9 @@ Windows generally recognizes the following "types" of device drivers:
 - Kernel streaming filter drivers
 - Software drivers
 
-### High-Level Overview: The "Layered" Approach
+### The Windows Layered IO Concept
 
-TODO
+The Windows IO subsystem uses a layered driver / device model. Under this model, a request is initially presented to a given driver, and from there the driver may either handle the request itself or may pass the request on to another driver for it to handle. In this way, an IO request is passed from driver to driver along a "branch" of the overall device tree until the request is completed. Each driver that ultimately processes an IO request determines where to send the request next (or whether to forward the request at all). Furthermore, any driver can send any IO request to any device object. Thus, the path that an IO request will take within the system to reach completion is never predetermined. 
 
 ### NT4 Drivers
 
