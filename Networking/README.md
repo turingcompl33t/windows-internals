@@ -52,7 +52,38 @@ In summary:
 
 "Moving from UNIX sockets to Windows sockets is fairly simple. Windows programs require a different set of include files, need initialization and deallocation of WinSock resources, use `closesocket( )` instead of `close()`, and use a different error reporting facility. However, the meat of the application is identical to UNIX."
 
+### Asynchronous IO with Windows Sockets
+
+Overlapped IO, or, more generally, asynchronous IO, with Windows sockets refers to the ability to invoke various Windows sockets APIs in a non-blocking manner. Because the traditional multithreaded server model typically does not scale well beyond a (relatively low) threshold of connected clients, Windows' support for asynchronous socket IO is what allows for the development of massively scalable server applications on the platform.
+
+In general, there are three distinct ways in which asynchronous IO with Windows sockets may be implemented:
+- Overlapped IO (with or without the help of `AcceptEx()`): under the overlapped IO model, one provides an `OVERLAPPED` (or `WSAOVERLAPPED`, the two are equivalent) structure with an embedded event object handle to socket API functions (e.g. `WSASend()`, `WSARecv()`); the application then waits on the associated handle for the operation to complete and calls `WSAGetOverlappedResult()` to identify the target of the IO completion
+- Extended IO (with or without the help of `AcceptEx()`): under the extended IO model, one provides a callback function to socket API functions (e.g. `WSASend()`, `WSARecv()`); the callback function is then invoked by the system once the IO is complete, provided the thread that initiated the operation enters an alertable wait state
+- IO Completion Port: under the IO completion port model, one creates a new IO completion port (via `CreateIoCompletionPort()`) and subsequently associates each new socket on which IO is to be performed with the port; threads within the application may then wait for IO completion events to be posted to the port via the `GetQueuedCompletionStatus()` function
+
+These three methods for implementing asychronous IO with Windows sockets vary in their complexity and performance characteristics. In general, the IO completion port implementation offers the simplest programming model and also easily incorporates additional resources in the form of multiple threads.
+
 ### Windows Sockets API
+
+The Windows sockets API provides application programmers a robust and flexible set of types and functions with which to write programs that communicate over the network. Some of the features provided by the most recent version of the Windows sockets API include the following:
+- Socket handles that are interoperable with regular Windows handle types, thus allowing one to manipulate Windows sockets with regular Windows file IO APIs
+- Simultaneous access to a large number of transport protocols 
+- Protocol-independent name resolution
+- Protocol-independent multicast and multipoint support
+- Support for numerous methods of implementing the Windows asynchronous IO model
+- Support for scatter / gather IO operations 
+- Support for sharing socket handles between processes
+- A dedicated debug / trace implementation of the base Winsock DLL (_ws2\_32.dll_) for improved debugging and performance monitoring in non-release builds
+
+The breadth of the Windows socket API is both a blessing and a curse - the sheer number of functions and types exported by the API can prove somewhat overwhelming. For instance, the API supports a high degree of compatibility with the traditional Berkeley socket API and thus exports functions such as `socket()`, `accept()`, `connect()`, and `recv()`. However, the API frequently exports other functions that serve similar purposes yet present additional functionality that cannot be achieved with the BSD-compatible functions. For instance, the Windows-specific analogs to the four aforementioned functions are:
+- `socket()` -> `WSASocket()`
+- `accept()` -> `AcceptEx()`
+- `send()` -> `WSASend()`
+- `recv()` -> `WSARecv()`
+
+The list of such functions is long and varied. The important point is to recognize the existence of such discrepancies in the API and make the choice for which API to utilize in one's application accordingly. For instance, if one is writing a networked application that is intended to run on both Windows and UNIX platforms, utilizing the BSD-compatible functions makes the task of writing cross-platform code relatively simple. Similarly, if one is writing an application that will only be built for Windows systems, one may take advantage of the additional functionality provided by the Windows-specific functions with no regard to the portability of the application.
+
+### Windows BSD-Style API
 
 Aside from the distinctions mentioned above, the Windows sockets API is identical to the Berkeley sockets API.
 
