@@ -1,5 +1,10 @@
 // ExtendedIoServer.cpp
 // Simple echo server implementation utilizing extended IO with callback routines.
+//
+// NOTE: this example leaves much to be desired in terms of
+// proper error-handling and cleanup; while these considerations
+// are always important, they are far from the focus
+// of this example.
 
 #define _WINSOCKAPI_ 
 #define WIN32_LEAN_AND_MEAN
