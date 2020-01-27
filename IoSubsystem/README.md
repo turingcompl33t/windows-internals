@@ -26,6 +26,23 @@ There are two general types of software drivers:
     - Used for the majority of kernel services, file systems, etc.
     - May be loaded manually (via the SCM) or via pre-set Registry entries (boot-start, system-start, etc.)
 
+### IO Processing
+
+IO processing is a fundamental system mechanism implemented by the Windows IO Manager. The IO processing procedure involves all layers of the system - from user-mode application code to low-level device drivers that manage physical hardware. The procedure below gives a general overview of the IO processing procedure. This example uses the `ReadFile()` operation as a case study. Note that propagation of the IRP down the device tree is not discussed even though it is likely that most IO operations originating with the `ReadFile()` call will involve a multi-layer device stack and perhaps even lateral movement within the device tree.
+
+1. Application code running in user mode calls `ReadFile()` which eventually transitions to _ntdll.dll_ implementation of `NtReadFile()`; this function performs the transition to kernel mode
+2. The IO Manager implements the executive function `NtReadFile()` in the kernel, some validation checks are performed, then the IRP for the request is initialized and directed at the appropriate device object that represents the target for the IO operation; the pointer to the driver object maintained by the device object allows the IO Manager to locate the appropriate driver dispatch routine for the operation
+3. The driver dispatch routine gives the driver code its first look at the IRP; the driver then wants to invoke the appropriate Start IO routine to service the request, but if the hardware device is busy the IRP is inserted into a queue managed by the device object and a busy bit is set for the device object reflecting the fact that is has requests pending, the `IoStartPacket()` function is
+typically used to handle such scenarios (this example assumes the driver is utilizing system queueing rather than driver queueing)
+4. When the hardware device is ready, the Start IO routine is called (either from the dispatch routine directly or from the IO manager if `IoStartPacket()` was used to handle the request when the hardware device was busy) to initiate the IO with the hardware device; the purpose of the Start IO routine is to perform the actual programming of the hardware device to perform the requested IO operation once the Start IO routine returns; the hardware is left to do its thing and the device can now service other requests
+5. When the hardware completes the requested operation it raises an interrupt; the hardware handles the transition from the interrupt to the registered ISR, raising the IRQL to the device IRQL (DIRQL) in the process
+6. The ISR, running at some high Device IRQL, does as little work as possible; as its final act it queues a DPC for further processing of the completed IO operation
+7. Once the interrupt is dismissed, kernel logic notices that the CPU DPC queue is not empty and issues a software interrupt at IRQL DPC_LEVEL (2) to enter the DPC processing logic
+8. The DPC is dequeued in some arbitrary thread context; in the context of some kernel worker thread, the first thing it does is call the `IoStartNextPacket()` routine for the device in order to start processing of the next available IRP, this calls the Start IO routine and the cycle starting from (4) repeats for this next IRP; the DPC finally completes the IRP by calling `IoCompleteRequest()`
+9. Finally, the original requesting thread needs to be notified that IO has completed; this is accomplished by queueing a special kernel APC for the requesting thread to be run by the requesting thread once it is given CPU time (note that for the delivery of such APCs, the originating thread need not enter an alertable wait state as is the case for standard user APCs)
+
+This final step is slightly different in the case of asynchronous IO requests. In the asynchronous case utilizing extended IO, the application code supplies a callback function and the IO Manager queues a user APC in the requesting thread's APC queue as the last stage in IRP completion. In this case the requesting thread must enter an alertable wait state in order for the APC queue to be checked and the process to be notified of the completion of the IO operation.
+
 ### IO Manager Data Structures
 
 The IO Manager utilizes several critical data structures to implement IO processing.
@@ -100,6 +117,18 @@ On top of these simple kernel dispatcher object, the Windows executive provides 
 - `FAST_MUTEX`: a lighter-weight version of the `KMUTEX` that cannot be recursively acquired
 
 Spin locks are utilized in cases when a thread is running non-dispatchable, that is, the current processor IRQL is greater than DISPATCH_LEVEL which implies that the kernel dispatcher cannot run and therefore that the currently executing thread will not be preempted. All spin lock instances have an IRQL implicitly associated with them. This IRQL must be the highest IRQL at which an attempt to acquire the lock will be made. For instance, the implicit IRQL for Executive spin lock objects is DISPATCH_LEVEL while the implicit IRQL for interrupt spin locks is the device IRQL associated with the device that utilizes the lock.
+
+### Synchronous and Asynchronous IO
+
+The Windows programming interface supports both synchronous and asynchronous IO models. These two IO models present different semantics at the level of the application developer, but are actually implemented in a nearly-identical manner at the level of the IO subsystem.
+
+In a synchronous IO operation, the user-mode application initiates a request via the invocation of an appropriate API function (e.g. `ReadFile()`, `WriteFile()`, etc.) and this call subsequently blocks the current thread of execution until the IO operation is complete. Most functions exposed by the Win32 API that perform IO operate synchronously by default.
+
+In an asynchronous IO operation, the user-mode application initiates a request via the invocation of an appropriate API function and this call immediately returns to the caller - the current thread of execution does not block and wait for the IO operation to complete. The user-mode application must then synchronize its retrieval of the result of this operation with the IO subsystem. There are various methods for implementing this second step. For instance, the application may utilize the overlapped IO model and wait on an event object which becomes signaled when the IO completes. Alternatively, the application may utilize the extended IO model with completion routines and specify a callback routine at the time the IO is initiated which will then be invoked when the operation completes (provided the application enters an alertable wait state).
+
+Regardless of whether the IO operation is initiated as a synchronous or asynchronous operation at the level of the application, the IO is performed asynchronously by the IO subsystem. That is, the kernel drivers that implement the routines that ultimately service the IO operation return the result of the operation to the IO Manager as soon as the result is available. The IO Manager then provides the illusion of synchronous or asynchronous IO at the level of the application by returning the result to the application in a manner dictated by the IO method it specified when it originated the request:
+- If the application initiated the operation under the synchronous model, the IO Manager returns the result to the application as soon as it becomes available
+- If the application initiated the operation under the asynchronous model, the IO Manager returns the result to the application at a time and in a manner dictated by the specifics of the asynchronous IO mechanism it utilized (e.g. overlapped IO vs extended IO)
 
 ### Kernel Callbacks
 
