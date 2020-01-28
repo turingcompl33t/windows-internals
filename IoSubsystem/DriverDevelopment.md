@@ -16,6 +16,32 @@ The WDK is a software toolset that enables device driver development. It include
 
 The EWDK is a standalone, self-contained command line environment for building drivers. It includes the Visual Studio build tools, the SDK, and the WDK. That is, in contrast to the WDK, it does not require separate installation and configuration of Visual Studio to be a fully-functional driver development environment.
 
+### User vs Kernel Development
+
+There are several important distinctions between the programming support offered in user-mode and that offered in kernel-mode.
+
+User Mode
+- Unhandled exceptions crash the process
+- When a process terminates, all private memory and resources are freed automatically by the operating system
+- API errors are sometimes ignored
+- Always executes at IRQL_PASSIVE_LEVEL (0)
+- Bad coding errors are typically localized to the process
+- Testing and debugging are performed on the developer's machine
+- Can use almost any C/C++ library
+- Can use SEH of C++ exception handling
+- Full C++ runtime is available
+
+Kernel Mode
+- Unhandled exceptions lead to a bugcheck 
+- If a driver unloads without freeing all of the memory it was using, this is a leak that is only resolved by the next system reboot
+- Should almost never ignore errors
+- May execute at IRQL_DISPATCH_LEVEL or higher
+- Bad coding errors can have a system wide effect
+- One must use another machine for testing and debugging
+- Most standard libraries cannot be used
+- Only SEH can be used for exceptions
+- No C++ runtime is available
+
 ### Kernel Driver Execution Contexts
 
 Kernel mode drivers execute in one of the three following contexts:
