@@ -8,6 +8,23 @@ It is difficult to find a more succinct overview of Windows system architecture 
 
 ![SystemArchitecture](Local/SystemArchitecture.png)
 
+### Core Windows Components
+
+The overall architecture of the Windows operating system is typically broken down into the following core components:
+- Environment Subsystems: environment subsystems are user-mode processes that implement a specific Windows environment subsystem server; these environment subsystem servers manage various aspects of user-mode processes that target that subsystem such as tracking process and thread creation and implementing certain subsystem API calls; examples of environment subsystem processes include the Client-Server Runtime Subsystem (_csrss.exe_) and the Session Manager Subsystem (_smss.exe_)
+- System Processes: system processes are standard (for the most part, some are now implemented as protected processes or even trustlets) Windows processes that implement some critical system functionality; system processes are those that are always active by default on any Windows system; examples of system processes include the init process (_wininit.exe_), the logon process (_winlogon.exe_), and the System process (no associated image)
+- Services: Windows services are user-mode processes that interface with the Windows Service Control Manager (SCM); services are typically used to implement long-running system-level tasks such as Windows Defender Anti-Malware
+- Applications: application programs are any user-mode process that does not fall into the preceding three categories; note that on modern versions of Windows the degree of variation among Windows applications has grown substantially; for instance, standard desktop applications, protected processes, Universal Windows Platform applications, and trustlets all fall into the category of Windows applications
+- Subsystem DLLs: subsystem DLLs expose the functionality of the subsystem for which they defined; these DLLs are then linked against by user-mode applications in order to access operating system routines and resources
+- System Support Library (_ntdll.dll_): the system support library exposes the Windows native API; this is the lowest level API available to code that executes in user-mode context and serves as the bridge between user-mode and kernel-mode execution 
+- System Service Dispatcher: the system service dispatcher is the uppermost layer of the Windows Executive; the system service dispatcher is responsible for dispatching system service request from user-mode to the appropriate kernel-mode implementation that may service that request
+- Windows Executive and Executive Subsystems: the Windows Executive implements the high-level API of the Windows kernel; the Executive is comprised of various subsystems which are merely logical divisions in functionality among the Executive's components; Executive subsystems include the IO Manager, the Security Reference Monitor, the Power Manager, the Memory Manager, the Plug and Play Manager, the Process Manager, the Object Manager, and the Configuration Manager
+- Device and Filesystem Drivers: device and filesystem drivers implement the routines that ultimately interact with physical devices such as ports, peripherals, and storage media; the entire space of device and filesystem drivers is organized into a logical device tree upon which the Windows layered IO model is built
+- Windows Graphics Drivers: graphics drivers implement the low-level support for the windowing system
+- Windows Kernel: the Windows Kernel implements the low-level system facilities upon which the Windows Executive is built; these facilities include thread scheduling, synchronization services, and interrupt and execution dispatching
+- Hardware Abstraction Layer (HAL): the HAL implements the platform-specific components necessary for Windows to run on a variety of platforms
+- Hypervisor (Hyper-V): the Windows hypervisor further abstracts the operating system away from the underlying hardware upon which it executes; the hypervisor is the component that enables many new Windows features including virtualization-based security
+
 ### User Mode Processes
 
 In general, there are four (4) types of user-mode processes on Windows:
@@ -101,39 +118,20 @@ The environment subsystem process for the Windows subsystem is the Client Server
 
 Instead of trying to write up my own (inadequate) recreation, I will instead simply link to the [Hunt Evil Poster](Local/SANS_Poster_2018_Hunt_Evil_FINAL.pdf) from SANS that beautifully describes all of the Windows 10 system processes.
 
-**_System_**
+The system processes found on a default-configured Windows 10 system include the following:
 
-**_Secure System_**
-
-**_System Idle_**
-
-**_System Interrupts_**
-
-**_Memory Compression_**
-
-**_Registry_**
-
-**_smss.exe_**
-
-**_wininit.exe_**
-
-**_RuntimeBroker.exe_**
-
-**_taskhostw.exe_**
-
-**_winlogon.exe_**
-
-**_csrss.exe_**
-
-**_services.exe_**
-
-**_svchost.exe_**
-
-**_lsaiso.exe_**
-
-**_lsass.exe_**
-
-**_explorer.exe_**
+- `System`: the system process is responsible for most kernel-mode threads; modules that run under the `System` process include device drivers, several critical DLLs, and the kernel executable itself
+- `smss`: the Session Manager Subsystem is responsible for creating and managing Windows sessions; the first instance the Session Manager process creates a child instance for each new session on the system which eventually exits after the session has been initialized
+- `wininit`: the Init process starts several critical background processes within session 0 upon initial system startup including the Service Control Manager process, the Local Security Authority process, and, on systems with Credential Guard enabled, the secure Local Security Authority process
+- `RuntimeBroker`: the runtime broker process acts as an intermediary between processes that execute in a constrained context and the full range of services provided by the operating system; examples of applications that make use of a runtime broker instance include Universal Windows Platform applications that execute within AppContainer sandboxes and applications that execute within the sandbox provided by Windows Defender Application Guard
+- `taskhostw`: the generic host process in which Windows tasks execute
+- `winlogon`: the logon process manages interactive user logon and logoff events
+- `csrss`: the Client-Server Runtime Subsystem implements the environment subsystem server for the Windows subsystem
+- `services`: implements the Service Control Manager (SCM) and the Unified Background Process Manager (UBPM)
+- `svchost`: the generic host process for Windows services
+- `lsass`: the vanilla-implementation of the Local Security Authority process; this process is responsible for user authentication
+`lsaiso`: the secure version of the Local Security Authority process that executes as a trustlet in Isolated User Mode (IUM); this process is only present in the event that Virtualization-Based Security and Credential Guard are enabled
+- `explorer`: the default shell application that provides interactive user access to files, the desktop, the taskbar, the control panel, among other things 
 
 ### References
 
