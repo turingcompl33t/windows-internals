@@ -7,7 +7,7 @@ Windows is often referred to as an _object-based_ operating system because it im
 - Provide a mechanism to "charge" processes for system resource usage
 - Establish a globally-valid object naming scheme
 
-### Object Types
+### Object Model Types
 
 Windows recognizes three (3) distinct types of objects internally:
 
@@ -18,6 +18,67 @@ Windows recognizes three (3) distinct types of objects internally:
 Executive objects are typically composed of one or more "primitive" kernel objects. These kernel objects are only utilized internally by the Executive, while executive objects are exported for use throughout the system.
 
 Do not confuse terminology here: often the term "kernel object" is used to refer to executive objects. The precise name used to identify these object is immaterial so long as one keeps in mind that their are two "levels" of objects recognized internally by the Windows kernel: those that it exports for system-wide object management, and those that it does not.
+
+### Object Lifecycle
+
+The Windows Object Manager implements the Windows object model. The Object Manager is designed to meet the following functionality goals:
+- Provide a common, consistent mechanism for access OS resources
+- Enforce uniform object access policy
+- Provide a robust mechanism for tracking the use of system resources on a per-process basis
+- Provide a consistent object naming scheme
+- Establish well-defined, uniform rules for object lifetimes
+
+Windows defines three categories of objects in its object model:
+- Executive Objects: objects implemented by various Executive subsystems
+- Kernel Objects: objects implements by the Kernel; utilized only within the Executive itself; not exposed to user-mode code
+- User / GDI Objects: objects utilized by environment subsystem and the windowing system
+
+Executive objects are exposed to user-mode code via environment subsystem DLLs. There may be a one-to-one mapping between the object exposed to user mode by the subsystem, or the subsystem may instead expose its own object type that is constructed from an underlying Executive object. For instance, Windows subsystem mutex objects are implemented directly as Executive objects, while named-pipes are an abstraction built on top of the Executive file object. 
+
+At a high level, an Executive object is composed of an object header and some object-specific data. As previously mentioned, while the Object Manager manages all objects within the Windows object model, the objects themselves are implemented by various Executive subsystems. Thus, the Object Manager "owns" the object header, while the Executive subsystem that implements the object itself takes responsibility for the remainder of the object (the object body).
+
+The object header for Executive objects maintains important metadata regarding the object in question. The fields that make up this metadata in the object header are consistent across all object types, regardless of the Executive subsystem that implements the object. These fields include the following:
+- Object Name 
+- Object Directory
+- Security Descriptor
+- Quota Charges
+- Open Handle Count
+- Open Handle List
+- Object Type
+- Reference Count
+- Flags
+
+In addition to the base object header, an object header may also contain any or all of the following subheaders:
+- Creator Information
+- Name Information
+- Handle Information
+- Quota Information
+- Process Information
+
+Because the object header is uniform across all object types, the Object Manager exposes the following basic functionality for all Executive objects:
+- Close: close a handle to the object
+- Duplicate: share an object by duplicating a handle
+- Make Permanent / Make Temporary: alter the retention state of the object
+- Query Object: query an object attribute information (flags)
+- Query Security: query an object's security descriptor 
+- Set Security: update an object's security descriptor
+- Wait For Single Object: synchronize on a single object instance
+- Wait For Multiple Objects: synchronize on multiple object instances
+- Signal Object And Wait: signal one object and synchronize execution on another
+
+In addition to these base services provided by the Object Manager, the object model allows the Executive subsystem that implements the object to specify a set of object methods that are invoked at certain, well-defined points in the object's lifecycle (analogous to C++ special member functions). The object methods that the Executive subsystem may implement include:
+- Open: called when a new handle to the object is acquired
+- Close: called when a handle to the object is closed
+- Delete: called before the Object Manager destroys an object
+- Query Name: called when the name of the object is requested
+- Parse: called when the Object Manager itself is searching for an object by name that may exist in a secondary namespace
+- Okay to Close: called before the Object Manager closes a handle to the object
+- Security: called when the security descriptor for an object is modified
+
+The Object Manager implements lifetime management for Executive objects via reference counting. Two of the members of the object header for every object managed by the Object Manager are `handle count` and `reference count`. The handle count field denotes the number of open handles to the object instance that are currently open, while the reference count tracks the total number of references (both via handles and otherwise) to the object that are outstanding. When the last handle to an object instance is closed (the handle count field reaches 0), the Object Manager removes the object's name from the global namespace, indicating that the object is no longer available to user-mode code. However, the Object Manager cannot destroy the object until the reference count also reaches 0, and this does not occur until all kernel-mode references to the object that do not utilize an object handle are released. Once the reference count reaches 0, the Object Manager is free to destroy the object.
+
+The above paragraph describes the lifetime of _temporary objects_. The Object Manager also supports the construction of _permanent objects_. Such objects have lifetimes that are not managed by reference counting, but rather must be explicitly destroyed by a call from within the code (outside the Object Manager) that is utilizing the object.
+
 
 ### Common Executive Objects
 

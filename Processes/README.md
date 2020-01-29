@@ -269,8 +269,23 @@ The kernel component of the Windows subsystem, _win32k.sys_, maintains a `W32PRO
 
 Process permissions are implemented by a collection of related but distinct mechanisms:
 
+- Integrity Level
 - Account Rights and Privileges: for operations performed by the process that do not involve some action taken upon a a particular object
 - Access Token User and Group SIDs: for operations involving a specific object or objects 
+
+**Integrity Level**
+
+One of the fields maintained in the process primary access token is the integrity level for the process. This integrity level is used to perform mandatory integrity level checks during all object access operations. The integrity level denotes the "trustworthiness" of the process to which the integrity level is assigned. Windows defines the following integrity levels:
+- (0) Untrusted
+- (1) Low
+- (2) Medium
+- (3) High
+- (4) System
+- (5) Protected
+
+All objects managed by the Object Manager also have an associated integrity level maintained in the object security descriptor. If any thread within a process (assuming the thread is not impersonating) attempts to access an object with an integrity level higher than that reflected by the process primary access token, the access is denied by the Security Reference Monitor.
+
+The integrity level for a process is implemented as a SID within the process primary access token's list of group SIDs. In addition to this integrity level SID, the primary access token also contains the owner SID and any other group SIDs that compose the process security context. These SIDs are derived from the user account that was utilized to create the process. The owner SID and the group SIDs are then utilized in discretionary access control checks whenever the process attempts to manipulate an object managed by the Object Manager. This discretionary access control check (performed by the Security Reference Monitor) determines if the action requested by the process is permitted.
 
 **Account Rights and Privileges**
 
