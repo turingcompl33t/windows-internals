@@ -251,13 +251,13 @@ A process exits gracefully by calling `ExitProcess()`. Most of the time, this fu
 
 In contrast, a call to `TerminateProcess()` does not guarantee such a graceful exit.
 
-### Process Attributes in User Space
+### Process Structures in User Space
 
 The process environment block (`PEB`) is the primary process-related data structure that exists in user space. The `PEB` contains information needed by the image loader, heap manager, and other Windows components. The `PEB` is made accessible in user space because making these facilities accessible only through system calls would be prohibitively expensive.
 
 The Windows subsystem process, _csrss.exe_, maintains a `CSR_PROCESS` data structure for every user process that it manages.
 
-### Process Attributes in Kernel Space
+### Process Structures in Kernel Space
 
 Every process on the system is represented internally by an executive process (`EPROCESS`) structure maintained by the executive. The majority of the `EPROCESS` structure and its related data structures exist only in system address space.
 
@@ -329,6 +329,22 @@ UAC behavior is controlled by the following four (4) registry keys under `HKLM\S
 - `ConsentPromptBehaviorUser`
 - `EnableLUA`
 - `PromptOnSecureDesktop`
+
+### Process Attributes in User Space
+
+User-space process attributes refer to those properties of Windows processes that may be manipulated from a user-mode execution context. Examples of such attributes include the following:
+- Running State: the Win32 API exposes the `TerminateProcess()` function which allows one process to forcibly terminate another assuming that it is able to acquire a sufficiently-powerful handle to the target process; one may utilize this function as a method for forcibly closing unresponsive processes or as a last resort mechanism to control the execution of a child process; it is generally best to avoid this function, however, as it does not allow components within the process (e.g. DLL unload routines, C++ destructors) to execute and perform proper cleanup
+- Priority Class: the `SetPriorityClass()` API allows one to set the priority class for a specified process identified by an open handle; the process priority class determines the base priority of threads executing within that process context; one may manipulate this property as a means of augmenting or curtailing the amount of processor time that the threads within the processor are allocated because thread priority is the primary determinant utilized by the kernel dispatcher's scheduling algorithm
+- Affinity Mask: the `SetProcessAffinityMask()` function may be utilized to control the processor affinity for the threads in a specified process; one may utilize this function as a means of improving system performance in certain situations by explicitly specifying that specified threads may only be permitted to execute on a limited set of processors
+- Mitigation Policy: the `SetProcessMitigationPolicy()` function may be utilized to set the mitigation policies for the process in whose context the calling thread executes; process mitigation mechanisms that may be manipulated via this API include data execution prevention (DEP) usage, address-space layout randomization (ASLR) usage, and control-flow guard (CFG) usage; one may utilize this API to upgrade or downgrade the security posture of the current process
+- Working Set Size: the `SetProcessWorkingSetSize[Ex]()` function may be utilized to set a minimum and maximum working set size for a specified process; this property may be utilized to expand or contract the memory usage capabilities of a process
+- AppContainer Sandbox: one may utilize the process creation API in conjunction with the security API to create a new process that runs in the context of an AppContainer sandbox; one may utilize this property to limit the capabilities of a child process that may need to perform some "risky" operation (such as hosting a web browser)
+- Parent Process: one may utilize the process creation API to manually specify the parent process for a newly-created process; re-parenting is a procedure that is commonly utilized by the operating system in order to present more a comprehensible process hierarchy
+- Virtual Address Space Content: the virtual memory API allows user-space programs with a sufficient level of privilege to both read and write the address space of other processes; this is an extremely powerful mechanism that supports high-level techniques such as DLL injection and remote process injection; the virtual APIs that support this functionality include `VirtualAllocEx()`, `ReadProcessMemory()`, and `WriteProcessMemory()`
+
+### Process Attributes in Kernel Space
+
+Kernel-space process attributes refer to those properties of Windows processes that may be manipulated from a kernel-mode execution context. Examples of such attributes include the following:
 
 ### Process Management API
 

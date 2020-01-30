@@ -79,7 +79,6 @@ The Object Manager implements lifetime management for Executive objects via refe
 
 The above paragraph describes the lifetime of _temporary objects_. The Object Manager also supports the construction of _permanent objects_. Such objects have lifetimes that are not managed by reference counting, but rather must be explicitly destroyed by a call from within the code (outside the Object Manager) that is utilizing the object.
 
-
 ### Common Executive Objects
 
 The executive implements many object types; some common object types include:
@@ -153,6 +152,22 @@ Object security is covered in detail in another section of this repository. All 
 
 - When an application requests a new handle to an object, the Object Manager invokes the SRM to determine if the access is allowed; if it is, the SRM returns the access rights that the application has been granted for that object, and the Object Manager stores these in the corresponding handle
 - Now, whenever the application makes use of this handle to manipulate or query the object, the Object Manager simply compares the requested operation with the access mask for the object's handle to determine if the operation is permitted; there is no need to consult the SRM on individual operations once the handle has been acquired
+
+### Some Object Security API
+
+The Windows security model is far more involved than the security model implemented by other operating systems (e.g. UNIX). Accordingly, the API Windows provides for programmatically managing this security model is comprehensive, consisting of a large set of functions and associated type definitions and structures. Two of the fundamental security-related components that the security API supports working with are security descriptors and access tokens.
+
+The following is a brief overview of the fundamentals of the security API for working with security descriptors. Assume for the sake of demonstration that we want to construct an entirely new security descriptor from scratch. The first step is to instantiate a `SECURITY_DESCRIPTOR` structure and initialize it with the `InitializeSecurityDescriptor()` function. Once the security descriptor is initialized, we need to set the owner and group security identifiers (SIDs) within the security descriptor. There are a variety of ways to obtain SIDs to use in these two fields. The simplest available is the `LookupAccountName()` function which queries an account security identifier given an account name. If we need to do the reverse (for instance if we have a list of SIDs that we want to compare against a known account name) the security API provides the `LookupAccountSid()` which queries an account name given a security identifier. Once the appropriate SID(s) have been identified, we may set the user and group fields within the security descriptor with the `SetSecurityDescriptorOwner()` and `SetSecurityDescriptorGroup()` functions. Once the owner and group SIDs have been set, we need to construct the discretionary access control list (DACL) that will do the bulk of the work of controlling access to the object to which this security descriptor is attached. We can initialize a new `ACL` structure with `InitializeAcl()`. From there, it is a simple matter to add access control entries to the ACL with the `AddAcccessAllowedAce()` and `AddAccessDeniedAce()` functions. Finally, once the ACL is complete we can associate it with the security descriptor with the `SetSecurityDesciptorDacl()` function. This completes the setup for a minimal security descriptor; all that remains is to attach the security descriptor to an object. This may be accomplished in a number of ways, one of which is simply specifying the newly constructed security descriptor in a call to an object-creation routine such as `CreateEvent()`, `CreateMutex()`, etc.
+
+The functions provided by the security API for working with access tokens are similar. A brief overview of these functions follows below.
+- `OpenProcessToken()`: acquires a handle to the primary access token for the specified process
+- `OpenThreadToken()`: acquires a handle to the access token for the specified thread (assuming the thread is impersonating; if not, the function fails)
+- `DuplicateTokenEx()`: duplicates an existing token as either a primary or an impersonation token (the `DuplicateToken()` function does not allow for the creation of a primary token)
+- `SetThreadToken()`: set the impersonation token for a thread with the specified access token object
+- `AdjustTokenGroups()`: add to or remove from the set of group SIDs for the specified access token
+- `AdjustTokenPrivileges()`: add to or remove from the set of privileges present in the specified access token
+
+With just this small set of functions (and a few utilities such as for working with SIDs) one may perform a wide variety of operations that augment or curtail the power of an access token and by extension the capabilities of the process that executes in that token's security context.
 
 ### References
 
