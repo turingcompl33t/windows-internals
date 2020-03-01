@@ -1,6 +1,5 @@
 :: clean.bat
 :: Clean up build artifacts.
 
-del .\*.exe
-del .\*.obj
-del .\*.txt
+del /S .\*.exe
+del /S .\*.obj

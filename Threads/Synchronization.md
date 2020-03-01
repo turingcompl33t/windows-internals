@@ -262,7 +262,12 @@ The target thread executes any queued APCs by entering an alterable wait state, 
 
 In general, APCs are useful primitives for implementing _synchronous thread cancellation_. The cancellation is synchronous in the sense that the target thread must cooperate in the cancellation by entering an alertable wait state, at which point it executes the APC routine. Windows does not support asynchronous thread cancellation.
 
+### Waiting on a Specific Memory Location: `WaitOnAddress()`
+
+### Synchronization Barriers
+
 ### References
 
 - _Windows System Programming, 4th Edition_ Pages 259-298
-
+- _Windows 10 System Programming_ Chapter 7
+- `WaitOnAddress()` [Blog Post](https://devblogs.microsoft.com/oldnewthing/20160823-00/?p=94145) 

@@ -1,5 +1,8 @@
 // PerformanceTest.cpp
 // Comparison of performance between various synchronization primitives.
+//
+// Build
+//	cl /EHsc /nologo /std:c++17 /W4 /I C:\Dev\WDL PerformanceTest.cpp
 
 #include <windows.h>
 #include <process.h>
