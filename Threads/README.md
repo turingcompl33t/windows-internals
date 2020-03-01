@@ -1,8 +1,16 @@
 ## Windows Threads
 
-### Thread Attributes: User Space
+### Thread Attributes in User Space
 
-### Thread Attributes: Kernel Space
+User-space thread attributes refer to those properties of Windows threads that may be manipulated from a user-mode execution context. Examples of such attributes include the following:
+- Affinity Mask: the `SetThreadAffinityMask()` function may be utilized to manipulate the processor affinity for a specified thread; a thread's processor affinity may only specify a subset of the processor affinity described by the process affinity mask
+- Description: the `SetThreadDescription()` function may be utilized to set a human-readable name for a thread; this attribute is relatively useless, but may yet prove to be a fun IPC covert channel or shellcode storage technique
+- Priority: the `SetThreadPriority()` function may be utilized to manipulate the priority for a specified thread; this property is useful in that it controls the relative amount of processor execution time that the thread is allocated
+- Memory Priority: the `SetThreadInformation()` function may be utilized to manipulate the memory priority value for a specified thread; memory priority determines the amount of time that memory pages utilized by the thread remain in the working set before being removed by the system; manipulating the thread memory priority may therefore be used to limit the memory impact exerted by low-priority threads in order to improve overall system performance
+
+### Thread Attributes in Kernel Space
+
+Kernel-space thread attributes refer to those properties of Windows threads that may be manipulated from a kernel-mode execution context. Examples of such attributes include the following:
 
 ### Thread Priorities
 
