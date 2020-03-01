@@ -10,7 +10,6 @@
 *.userosscache
 *.sln.docstates
 WIL/wil/
-.vscode/
 */Inputs/*
 
 # User-specific files (MonoDevelop/Xamarin Studio)
