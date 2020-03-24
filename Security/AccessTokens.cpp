@@ -1,6 +1,9 @@
 // AccessTokens.cpp
 // Demo of some simple token management APIs.
 
+#define UNICODE
+#define _UNICODE
+
 #include <windows.h>
 #include <sddl.h>
 #include <tchar.h>
@@ -10,7 +13,7 @@
 void LogInfo(const std::string& str);
 void LogError(const std::string& str, DWORD dwGLE);
 
-int _tmain()
+int wmain()
 {
 	std::cout << "Hello Access Tokens" << std::endl;
 

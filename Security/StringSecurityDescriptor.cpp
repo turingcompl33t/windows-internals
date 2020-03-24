@@ -7,7 +7,6 @@
 #include <windows.h>
 #include <sddl.h>
 #include <cstdio>
-#include <tchar.h>
 
 #pragma comment(lib, "advapi32")
 
@@ -54,7 +53,7 @@ int wmain()
             NULL)
     ) 
     {
-        _tprintf(stringSid);
+        wprintf(stringSid);
 
         ::LocalFree(stringSid);
     }
