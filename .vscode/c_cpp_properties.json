@@ -4,8 +4,9 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:/Dev/WDL",
-                "C:/Dev/CDL"
+                "C:/Dev/WDL/include",
+                "C:/Dev/CDL/include",
+                "C:/Dev/Catch2"
             ],
             "defines": [
                 "_DEBUG",
