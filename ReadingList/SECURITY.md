@@ -7,6 +7,7 @@ Write-ups and proof-of concept sources.
 - [Alternate Data Streams](#-alternate-data-streams)
 - [AV/EDR Bypass](#-av/edr-bypass)
 - [Credential Exfiltration](#-credential-exfiltration)
+- [Fileless Malware](#-fileless-malware)
 - [Hooking](#-hooking)
 - [Microsoft Security Strategy](#microsoft-security-strategy)
 - [Process Injection](#-process-injection)
@@ -30,6 +31,12 @@ Write-ups and proof-of concept sources.
 ### [↑](#table-of-contents) Credential Exfiltration
 
 - [Github: Dumpert](https://github.com/outflanknl/Dumpert)
+
+### [↑](#table-of-contents) Fileless Malware
+
+- [MSDN: Fileless Threats](https://docs.microsoft.com/en-us/windows/security/threat-protection/intelligence/fileless-threats)
+- [Dismantling a Fileless Campaign: Microsoft Defender ATP's Antivirus Exposes Astaroth Attack](https://www.microsoft.com/security/blog/2019/07/08/dismantling-a-fileless-campaign-microsoft-defender-atp-next-gen-protection-exposes-astaroth-attack/)
+- [Latest Astaroth Living-off-the-Land Attacks are Even More Invisible but No Less Observable](https://www.microsoft.com/security/blog/2020/03/23/latest-astaroth-living-off-the-land-attacks-are-even-more-invisible-but-not-less-observable/)
 
 ### [↑](#table-of-contents) API Hooking
 
