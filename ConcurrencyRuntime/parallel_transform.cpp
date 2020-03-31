@@ -1,30 +1,54 @@
 // parallel_transform.cpp
+//
 // Demonstration of PPL parallel_transform algorithm.
+//
+// Build
+//	cl /EHsc /nologo /std:c++17 /W4 /I C:\Dev\Catch2 parallel_transform.cpp
+
+#define CATCH_CONFIG_MAIN
+#include <catch.hpp>
 
 #include <windows.h>
 #include <ppl.h>
 
-#include <cstdio>
 #include <vector>
+#include <numeric>
 
 using namespace concurrency;
 
-int wmain()
+TEST_CASE("")
 {
-	auto v = std::vector<int>{ 1, 2, 3, 4, 5 };
+	auto c = std::vector<int>{};
+	std::generate_n(
+		std::back_inserter(c),
+		10000,
+		[n = 1]() mutable
+		{
+			return n++;
+		});
 
-	// just a parallel version of std::transform
-	concurrency::parallel_transform(std::begin(v), std::end(v), std::begin(v), [](int e)
-	{
-		return e * 2;
-	});
+	concurrency::parallel_transform(
+		std::begin(c),
+		std::end(c),
+		std::begin(c),
+		[](int i)
+		{
+			return i*2;
+		});
 
-	for (const auto& e : v)
-	{
-		printf("%d ", e);
-	}
+	// parallel sum
+	auto p = std::accumulate(std::begin(c), std::end(c), 0);
 
-	printf("\n");
+	// reset the vector 
+	std::iota(std::begin(c), std::end(c), 1);
 
-	return 0;
+	// serial sum
+	auto s = std::transform_reduce(
+		std::begin(c), 
+		std::end(c), 
+		0,
+		std::plus{},
+		[](int i){ return i*2; });
+
+	REQUIRE(s == p); 
 }
