@@ -130,7 +130,7 @@ The system processes found on a default-configured Windows 10 system include the
 - `services`: implements the Service Control Manager (SCM) and the Unified Background Process Manager (UBPM)
 - `svchost`: the generic host process for Windows services
 - `lsass`: the vanilla-implementation of the Local Security Authority process; this process is responsible for user authentication
-`lsaiso`: the secure version of the Local Security Authority process that executes as a trustlet in Isolated User Mode (IUM); this process is only present in the event that Virtualization-Based Security and Credential Guard are enabled
+- `lsaiso`: the secure version of the Local Security Authority process that executes as a trustlet in Isolated User Mode (IUM); this process is only present in the event that Virtualization-Based Security and Credential Guard are enabled
 - `explorer`: the default shell application that provides interactive user access to files, the desktop, the taskbar, the control panel, among other things 
 
 ### References
