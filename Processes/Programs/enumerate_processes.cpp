@@ -1,11 +1,8 @@
-// EnumerateProcesses.cpp
+// enumerate_process.cpp
 // Demonstration of various methods for enumerating processes.
 //
 // BUILD:
-// cl /EHsc /nologo /std:c++17 EnumerateProcesses.cpp
-
-#define UNICODE
-#define _UNICODE
+//  cl /EHsc /nologo /std:c++17 enumerate_processes.cpp
 
 #include <windows.h>
 #include <Psapi.h>
@@ -23,17 +20,17 @@
 constexpr auto STATUS_SUCCESS_I = 0x0;
 constexpr auto STATUS_FAILURE_I = 0x1;
 
-VOID EnumerateProcessesWin32();
-VOID EnumerateProcessesToolhelp32();
-VOID EnumerateProcessesWTS();
+void EnumerateProcessesWin32();
+void EnumerateProcessesToolhelp32();
+void EnumerateProcessesWTS();
 
-INT ParseMethodId(PWCHAR argv[]);
+int ParseMethodId(char* argv[]);
 
-VOID LogInfo(const std::string_view msg);
-VOID LogWarning(const std::string_view msg);
-VOID LogError(const std::string_view msg);
+void LogInfo(std::string_view msg);
+void LogWarning(std::string_view msg);
+void LogError(std::string_view msg);
 
-INT wmain(INT argc, PWCHAR argv[])
+int main(int argc, char* argv[])
 {
     if (argc != 2)
     {
@@ -69,7 +66,6 @@ INT wmain(INT argc, PWCHAR argv[])
             EnumerateProcessesWTS();
             break;
         }
-        // TODO: native API method
         default:
         {
             LogWarning("Invalid method ID specified");
@@ -83,7 +79,7 @@ INT wmain(INT argc, PWCHAR argv[])
 
 
 // use the win32 API to enumerate processes
-VOID EnumerateProcessesWin32()
+void EnumerateProcessesWin32()
 {
     DWORD dwActualSize;
     DWORD dwMaxCount = 256;
@@ -138,7 +134,7 @@ VOID EnumerateProcessesWin32()
         WCHAR ExeName[MAX_PATH];
         DWORD NameLength = MAX_PATH;
 
-        GotName = ::QueryFullProcessImageName(hProcess, 0, ExeName, &NameLength);
+        GotName = ::QueryFullProcessImageNameW(hProcess, 0, ExeName, &NameLength);
 
         printf("[%5u]: %ws\n", pid, GotName ? ExeName : L"Name Unknown");
         printf("\tStart Time: %d/%d/%d %02d:%02d:%02d\n", 
@@ -155,7 +151,7 @@ VOID EnumerateProcessesWin32()
 }
 
 // enumerate processes with the Toolhelp32 API
-VOID EnumerateProcessesToolhelp32()
+void EnumerateProcessesToolhelp32()
 {
     LogInfo("Enumerating processes with Toolhelp32");
 
@@ -166,10 +162,10 @@ VOID EnumerateProcessesToolhelp32()
         return;
     }
 
-    PROCESSENTRY32 ProcessEntry;
-    ProcessEntry.dwSize = sizeof(PROCESSENTRY32);
+    PROCESSENTRY32W ProcessEntry;
+    ProcessEntry.dwSize = sizeof(PROCESSENTRY32W);
 
-    if (!::Process32First(hSnapshot, &ProcessEntry))
+    if (!::Process32FirstW(hSnapshot, &ProcessEntry))
     {
         LogError("Failed to enumerate processes (Process32First())");
         CloseHandle(hSnapshot);
@@ -179,20 +175,20 @@ VOID EnumerateProcessesToolhelp32()
     do 
     {
         printf("[%5u]: %ws\n", ProcessEntry.th32ProcessID, ProcessEntry.szExeFile);
-    } while (::Process32Next(hSnapshot, &ProcessEntry));
+    } while (::Process32NextW(hSnapshot, &ProcessEntry));
 
     ::CloseHandle(hSnapshot);
 }
 
 // enumerate processes with the Windows Terminal Services API
-VOID EnumerateProcessesWTS()
+void EnumerateProcessesWTS()
 {
     LogInfo("Enumerating processes with WTSEnumerateProcesses()");
 
     DWORD Count;
-    PWTS_PROCESS_INFO pProcessInfo;
+    PWTS_PROCESS_INFOW pProcessInfo;
 
-    if (!::WTSEnumerateProcesses(WTS_CURRENT_SERVER_HANDLE, 0, 1, &pProcessInfo, &Count))
+    if (!::WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 0, 1, &pProcessInfo, &Count))
     {
         LogError("Failed to enumerate processes (WTSEnumerateProcesses())");
         return;
@@ -213,9 +209,9 @@ VOID EnumerateProcessesWTS()
     ::WTSFreeMemory(pProcessInfo);
 }
 
-INT ParseMethodId(PWCHAR argv[])
+int ParseMethodId(char* argv[])
 {
-    INT MethodId = -1;
+    int MethodId = -1;
 
     try
     {
@@ -233,17 +229,17 @@ INT ParseMethodId(PWCHAR argv[])
     return MethodId;
 }
 
-VOID LogInfo(const std::string_view msg)
+void LogInfo(std::string_view msg)
 {
     std::cout << "[+] " << msg << std::endl;
 }
 
-VOID LogWarning(const std::string_view msg)
+void LogWarning(std::string_view msg)
 {
     std::cout << "[-] " << msg << std::endl;
 }
 
-VOID LogError(const std::string_view msg)
+void LogError(std::string_view msg)
 {
     std::cout << "[!] " << msg << '\n';
     std::cout << "[!]\tGLE: " << GetLastError() << '\n';

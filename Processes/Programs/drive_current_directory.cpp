@@ -1,18 +1,18 @@
 // DriveCurrentDirectory.cpp
 // Get the current drive directory.
-
-#define UNICODE
-#define _UNICODE
+//
+// Build
+//  cl /EHsc /nologo /std:c++17 /W4 drive_current_directory.cpp
 
 #include <windows.h>
 #include <iostream>
 
-INT wmain(VOID)
+int main()
 {
-    WCHAR CurrentDirectory[MAX_PATH];
-    GetFullPathName(L"C:", MAX_PATH, CurrentDirectory, nullptr);
+    char CurrentDirectory[MAX_PATH];
+    GetFullPathNameA("C:", MAX_PATH, CurrentDirectory, nullptr);
 
-    std::wcout << CurrentDirectory << std::endl;
+    std::cout << CurrentDirectory << std::endl;
 
     // Based on the output of this program, 
     // apparently the current drive directory is set
