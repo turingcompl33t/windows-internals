@@ -1,6 +1,6 @@
 // enumerate_native.cpp
 //
-// Utilize the native API to enumerate processes.
+// Utilizing the native API to enumerate processes.
 //
 // Build
 //  cl /EHsc /nologo /std:c++17 /W4 enumerate_native.cpp
@@ -168,9 +168,6 @@ int main()
     trace_info("NtQuerySystemInformation() succeeded");
 
     auto parsed = parse_results(buffer);
-    std::cout << "parsed " << parsed.size() << '\n';
-
-    //std::wcout << parsed[5].image_name << std::endl;
 
     for (auto const& p : parsed)
     {
