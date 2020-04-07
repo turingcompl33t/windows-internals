@@ -5,8 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "C:/Dev/WDL/include",
-                "C:/Dev/CDL/include",
-                "C:/Dev/Catch2"
+                "C:/Dev/CDL/include"
             ],
             "defines": [
                 "_DEBUG",
