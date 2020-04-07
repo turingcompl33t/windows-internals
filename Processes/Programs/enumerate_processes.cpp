@@ -1,8 +1,9 @@
 // enumerate_process.cpp
+//
 // Demonstration of various methods for enumerating processes.
 //
-// BUILD:
-//  cl /EHsc /nologo /std:c++17 enumerate_processes.cpp
+// Build:
+//  cl /EHsc /nologo /std:c++17 /W4 enumerate_processes.cpp
 
 #include <windows.h>
 #include <Psapi.h>
@@ -20,55 +21,55 @@
 constexpr auto STATUS_SUCCESS_I = 0x0;
 constexpr auto STATUS_FAILURE_I = 0x1;
 
-void EnumerateProcessesWin32();
-void EnumerateProcessesToolhelp32();
-void EnumerateProcessesWTS();
+void enumerate_win32();
+void enumerate_toolhelp();
+void enumerate_wts();
 
-int ParseMethodId(char* argv[]);
+int parse_method_id(char* argv[]);
 
-void LogInfo(std::string_view msg);
-void LogWarning(std::string_view msg);
-void LogError(std::string_view msg);
+void log_info(std::string_view msg);
+void log_warning(std::string_view msg);
+void log_error(std::string_view msg);
 
 int main(int argc, char* argv[])
 {
     if (argc != 2)
     {
-        LogWarning("Invalid arguments");
-        LogWarning("Usage: EnumerateProcesses <METHOD ID>");
-        std::cout << "\t0 -> EnumerateProcesses()" << '\n';
-        std::cout << "\t1 -> ToolHelp32" << '\n';
-        std::cout << "\t2 -> WTSEnumerateProcesses()" << '\n';
-        std::cout << std::endl;
+        log_warning("Invalid arguments");
+        log_warning("Usage: EnumerateProcesses <METHOD ID>");
+        std::cout << "\t0 -> EnumerateProcesses()" << '\n'
+                  << "\t1 -> ToolHelp32" << '\n'
+                  << "\t2 -> WTSEnumerateProcesses()" << '\n'
+                  << std::endl;
         return STATUS_FAILURE_I;
     }
 
-    auto MethodId = ParseMethodId(argv);
-    if (MethodId < 0)
+    auto method_id = parse_method_id(argv);
+    if (method_id < 0)
     {
         return STATUS_FAILURE_I;
     }
 
-    switch (MethodId)
+    switch (method_id)
     {
         case 0:
         {
-            EnumerateProcessesWin32();
+            enumerate_win32();
             break;
         }
         case 1:
         {
-            EnumerateProcessesToolhelp32();
+            enumerate_toolhelp();
             break;
         }
         case 2:
         {
-            EnumerateProcessesWTS();
+            enumerate_wts();
             break;
         }
         default:
         {
-            LogWarning("Invalid method ID specified");
+            log_warning("Invalid method ID specified");
             return STATUS_FAILURE_I;
         }
     }
@@ -79,56 +80,63 @@ int main(int argc, char* argv[])
 
 
 // use the win32 API to enumerate processes
-void EnumerateProcessesWin32()
+void enumerate_win32()
 {
-    DWORD dwActualSize;
-    DWORD dwMaxCount = 256;
-    DWORD dwCount = 0;
+    auto actual_size = unsigned long{};
+    auto max_count   = unsigned long{256};
+    auto count       = unsigned long{};
 
-    std::unique_ptr<DWORD[]> Pids;
+    std::unique_ptr<unsigned long[]> pids;
 
-    LogInfo("Enumerating processes with Win32 EnumProcesses()");
+    log_info("Enumerating processes with Win32 EnumProcesses()");
 
     // loop until we have enough space for all PIDs
     for (;;)
     {   
-        Pids = std::make_unique<DWORD[]>(dwMaxCount);
-        if (!::EnumProcesses(Pids.get(), dwMaxCount*sizeof(DWORD), &dwActualSize))
+        pids = std::make_unique<unsigned long[]>(max_count);
+        if (!::EnumProcesses(pids.get(), 
+                max_count*sizeof(unsigned long), 
+                &actual_size))
         {
-            LogError("Failed to enumerate processes (EnumProcesses())");
+            log_error("Failed to enumerate processes (EnumProcesses())");
             return;
         }
 
-        dwCount = dwActualSize / sizeof(DWORD);
-        if (dwCount < dwMaxCount)
+        count = actual_size / sizeof(unsigned long);
+        if (count < max_count)
         {
             break;
         }
 
         // resize and try again
-        dwMaxCount *= 2;
+        max_count *= 2;
     }
 
-    printf("[+] Enumerated %u processes:\n", dwCount);
+    printf("[+] Enumerated %u processes:\n", count);
 
-    for (DWORD i = 0; i < dwCount; ++i)
+    for (auto i = 0u; i < count; ++i)
     {
-        DWORD pid = Pids[i];
-        HANDLE hProcess = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+        auto pid = pids[i];
+        HANDLE hProcess = ::OpenProcess(
+            PROCESS_QUERY_LIMITED_INFORMATION, 
+            FALSE, 
+            pid);
+
         if (NULL == hProcess)
         {
-            printf("Failed to acquire handle to process %5u (GLE: %4u)\n", pid, GetLastError());
+            printf("Failed to acquire handle to process %5u (GLE: %4u)\n", 
+                pid, 
+                ::GetLastError());
             continue;
         }
 
+        auto start_time = FILETIME{ 0 };
+        auto dummy_time = FILETIME{};
+        auto system_time = SYSTEMTIME{};
 
-        FILETIME StartTime = { 0 };
-        FILETIME DummyTime;
-        SYSTEMTIME SystemTime;
-
-        ::GetProcessTimes(hProcess, &StartTime, &DummyTime, &DummyTime, &DummyTime);     
-        ::FileTimeToLocalFileTime(&StartTime, &StartTime);
-        ::FileTimeToSystemTime(&StartTime, &SystemTime);
+        ::GetProcessTimes(hProcess, &start_time, &dummy_time, &dummy_time, &dummy_time);     
+        ::FileTimeToLocalFileTime(&start_time, &start_time);
+        ::FileTimeToSystemTime(&start_time, &system_time);
 
         BOOL GotName;
         WCHAR ExeName[MAX_PATH];
@@ -138,108 +146,112 @@ void EnumerateProcessesWin32()
 
         printf("[%5u]: %ws\n", pid, GotName ? ExeName : L"Name Unknown");
         printf("\tStart Time: %d/%d/%d %02d:%02d:%02d\n", 
-            SystemTime.wDay, 
-            SystemTime.wMonth, 
-            SystemTime.wYear, 
-            SystemTime.wHour, 
-            SystemTime.wMinute, 
-            SystemTime.wSecond
-        );
+            system_time.wDay, 
+            system_time.wMonth, 
+            system_time.wYear, 
+            system_time.wHour, 
+            system_time.wMinute, 
+            system_time.wSecond
+            );
 
         ::CloseHandle(hProcess);
     }
 }
 
 // enumerate processes with the Toolhelp32 API
-void EnumerateProcessesToolhelp32()
+void enumerate_toolhelp()
 {
-    LogInfo("Enumerating processes with Toolhelp32");
+    log_info("Enumerating processes with Toolhelp32");
 
-    HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    auto hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (INVALID_HANDLE_VALUE == hSnapshot)
     {
-        LogError("Failed to create process snapshot (CreateToolhelp32Snapshot())");
+        log_error("Failed to create process snapshot (CreateToolhelp32Snapshot())");
         return;
     }
 
-    PROCESSENTRY32W ProcessEntry;
-    ProcessEntry.dwSize = sizeof(PROCESSENTRY32W);
+    auto process_entry = PROCESSENTRY32W{};
+    process_entry.dwSize = sizeof(PROCESSENTRY32W);
 
-    if (!::Process32FirstW(hSnapshot, &ProcessEntry))
+    if (!::Process32FirstW(hSnapshot, &process_entry))
     {
-        LogError("Failed to enumerate processes (Process32First())");
+        log_error("Failed to enumerate processes (Process32First())");
         CloseHandle(hSnapshot);
         return;
     }
 
     do 
     {
-        printf("[%5u]: %ws\n", ProcessEntry.th32ProcessID, ProcessEntry.szExeFile);
-    } while (::Process32NextW(hSnapshot, &ProcessEntry));
+        printf("[%5u]: %ws\n", process_entry.th32ProcessID, process_entry.szExeFile);
+    } while (::Process32NextW(hSnapshot, &process_entry));
 
     ::CloseHandle(hSnapshot);
 }
 
 // enumerate processes with the Windows Terminal Services API
-void EnumerateProcessesWTS()
+void enumerate_wts()
 {
-    LogInfo("Enumerating processes with WTSEnumerateProcesses()");
+    log_info("Enumerating processes with WTSEnumerateProcesses()");
 
-    DWORD Count;
-    PWTS_PROCESS_INFOW pProcessInfo;
+    auto count = unsigned long{};
+    auto process_info = PWTS_PROCESS_INFOW{};
 
-    if (!::WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 0, 1, &pProcessInfo, &Count))
+    if (!::WTSEnumerateProcessesW(
+        WTS_CURRENT_SERVER_HANDLE, 
+        0, 1, 
+        &process_info, 
+        &count))
     {
-        LogError("Failed to enumerate processes (WTSEnumerateProcesses())");
+        log_error("Failed to enumerate processes (WTSEnumerateProcesses())");
         return;
     }
 
-    printf("[+] Enumerated %u processes:\n", Count);
+    printf("[+] Enumerated %u processes:\n", count);
 
-    for (DWORD i = 0; i < Count; ++i)
+    for (auto i = 0u; i < count; ++i)
     {
-        auto pInfo = pProcessInfo + i;
+        auto info = process_info + i;
 
         // TODO: convert user SID to string and display
-        printf("[%5u]: %ws\n", pInfo->ProcessId, pInfo->pProcessName);
-        printf("\tSession ID: %u\n", pInfo->SessionId);
+        printf("[%5u]: %ws\n", info->ProcessId, info->pProcessName);
+        printf("\tSession ID: %u\n", info->SessionId);
     }    
     
     // required cleanup
-    ::WTSFreeMemory(pProcessInfo);
+    ::WTSFreeMemory(process_info);
 }
 
-int ParseMethodId(char* argv[])
+int parse_method_id(char* argv[])
 {
-    int MethodId = -1;
+    int method_id = -1;
 
     try
     {
-        MethodId = std::stoi(argv[1]);
+        method_id = std::stoi(argv[1]);
     }
     catch (std::out_of_range)
     {
-        LogWarning("Failed to parse Method ID (out of range)");
+        log_warning("Failed to parse Method ID (out of range)");
     }
     catch (std::invalid_argument)
     {
-        LogWarning("Failed to parse Method ID (conversion cannot be performed)");
+        log_warning("Failed to parse Method ID (conversion cannot be performed)");
     }
 
-    return MethodId;
+    return method_id;
 }
 
-void LogInfo(std::string_view msg)
+void log_info(std::string_view msg)
 {
     std::cout << "[+] " << msg << std::endl;
 }
 
-void LogWarning(std::string_view msg)
+void log_warning(std::string_view msg)
 {
     std::cout << "[-] " << msg << std::endl;
 }
 
-void LogError(std::string_view msg)
+void log_error(std::string_view msg)
 {
     std::cout << "[!] " << msg << '\n';
     std::cout << "[!]\tGLE: " << GetLastError() << '\n';
