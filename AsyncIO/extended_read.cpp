@@ -100,14 +100,21 @@ int main(int argc, char* argv[])
         contexts[i].Offset     = position.LowPart;
         contexts[i].OffsetHigh = position.HighPart;
 
-        ::ReadFileEx(
+        auto res = ::ReadFileEx(
             file,
             static_cast<char*>(buffer.get())
                 + position.QuadPart,
             CHUNKSIZE,
             &contexts[i],
-            on_read_complete
-        );
+            on_read_complete);
+
+        if (!res && ::GetLastError() != ERROR_IO_PENDING)
+        {
+            printf("[-] Failed to initiate asynchronous read\n");
+            printf("[-] GLE: %u\n", ::GetLastError());
+            ::CloseHandle(file);
+            return STATUS_FAILURE_I;
+        }
 
         position.QuadPart += CHUNKSIZE;
     }

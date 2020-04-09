@@ -153,13 +153,20 @@ int main(int argc, char *argv[])
         contexts[i].Offset     = position.LowPart;
         contexts[i].OffsetHigh = position.HighPart;
 
-        ::ReadFile(
+        auto res = ::ReadFile(
             file,
             static_cast<char*>(buffer.get())
                 + position.QuadPart,
             CHUNKSIZE,
             nullptr,
             &contexts[i]);
+
+        if (!res && ::GetLastError() != ERROR_IO_PENDING)
+        {
+            error("ReadFile() failed");
+            ::CloseHandle(file);
+            return STATUS_FAILURE_I;
+        }
 
         position.QuadPart += CHUNKSIZE;
     }

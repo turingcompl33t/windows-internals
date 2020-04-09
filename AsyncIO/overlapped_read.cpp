@@ -95,14 +95,21 @@ int main(int argc, char* argv[])
         contexts[i].OffsetHigh = position.HighPart;
 
         // issue the overlapped read operation
-        ::ReadFile(
+        auto res = ::ReadFile(
             file,
             static_cast<char*>(buffer.get()) 
                 + position.QuadPart,
             CHUNKSIZE,
             nullptr,
-            &contexts[i]
-        );
+            &contexts[i]);
+
+        if (!res && ::GetLastError() != ERROR_IO_PENDING)
+        {
+            printf("[-] Failed to initiate asynchronous read\n");
+            printf("[-] GLE: %u\n", ::GetLastError());
+            ::CloseHandle(file);
+            return STATUS_FAILURE_I;
+        }
 
         position.QuadPart += CHUNKSIZE;
     }
