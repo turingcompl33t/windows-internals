@@ -1,8 +1,9 @@
-// SynchronizationBarrier.cpp
+// synchronization_barrier.cpp
+//
 // Demonstration of new(er) Windows SYNCHRONIZATION_BARRIER primitive.
 //
 // Build
-//  cl /EHsc /nologo /W4 /std:c++17 /I C:\Dev\CDL SynchronizationBarrier.cpp
+//  cl /EHsc /nologo /W4 /std:c++17 /I %WIN_WORKSPACE%\_Deps\CDL\include synchronization_barrier.cpp
 
 #include <windows.h>
 

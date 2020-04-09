@@ -1,8 +1,9 @@
-// WaitOnAddress.cpp
+// wait_on_address.cpp
+//
 // Demonstration of new(er) Windows WaitOnAddress synchronization primitive.
 //
 // Build
-//  cl /EHsc /nologo /W4 /std:c++17 WaitOnAddress.cpp
+//  cl /EHsc /nologo /W4 /std:c++17 wait_on_address.cpp
 
 #include <windows.h>
 

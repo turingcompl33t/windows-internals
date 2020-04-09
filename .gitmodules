@@ -1,0 +1,6 @@
+[submodule "_Deps/WDL"]
+	path = _Deps/WDL
+	url = https://github.com/turingcompl33t/wdl.git
+[submodule "_Deps/CDL"]
+	path = _Deps/CDL
+	url = https://github.com/turingcompl33t/cdl.git

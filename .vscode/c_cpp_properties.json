@@ -3,9 +3,7 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**",
-                "C:/Dev/WDL/include",
-                "C:/Dev/CDL/include"
+                "${workspaceFolder}/**"
             ],
             "defines": [
                 "_DEBUG",
