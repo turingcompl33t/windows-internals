@@ -1,47 +1,36 @@
-// OverlappedIO.cpp
-// Demonstration of overlapped IO.
+// overlapped_read.cpp
+//
+// Demonstration of overlapped IO
 //
 // Build:
-//  cl /EHsc /nologo /std:c++17 OverlappedIO.cpp
+//  cl /EHsc /nologo /std:c++17 /W4 overlapped_read.cpp
 
 #include <windows.h>
+
 #include <cstdio>
 #include <string>
-#include <filesystem>
+#include <memory>
 
-namespace fs = std::filesystem;
+constexpr const auto STATUS_SUCCESS_I = 0x0;
+constexpr const auto STATUS_FAILURE_I = 0x1;
 
-constexpr auto N_OPERATIONS = MAXIMUM_WAIT_OBJECTS;
+// size of individual read operations
+constexpr const auto CHUNKSIZE = 4096;
 
-constexpr auto STATUS_SUCCESS_I = 0x0;
-constexpr auto STATUS_FAILURE_I = 0x1;
+static unsigned long long ops_completed = 0;
 
-INT wmain(INT argc, WCHAR* argv[])
+int main(int argc, char* argv[])
 {
     if (argc != 2)
     {
         printf("[-] Error: invalid arguments\n");
-        printf("[-] Usage: %ws <FILENAME>\n", argv[0]);
-        return STATUS_FAILURE_I;
-    }
-
-    HANDLE        hFile;
-    LARGE_INTEGER fileSize{};
-    ULONGLONG     readSize{};
-
-    ULONGLONG  completed{};
-    OVERLAPPED contexts[N_OPERATIONS];
-    HANDLE     events[N_OPERATIONS];
-
-    if (!fs::is_regular_file(argv[1]))
-    {
-        printf("[-] Invalid input file specified\n");
+        printf("[-] Usage: %s <FILENAME>\n", argv[0]);
         return STATUS_FAILURE_I;
     }
 
     // acquire a handle to the target file
     // specify the overlapped flag in file creation call
-    hFile = ::CreateFileW(
+    auto file = ::CreateFileA(
         argv[1],
         GENERIC_READ,
         FILE_SHARE_READ,
@@ -51,78 +40,84 @@ INT wmain(INT argc, WCHAR* argv[])
         nullptr
     );
 
-    if (INVALID_HANDLE_VALUE == hFile)
+    if (INVALID_HANDLE_VALUE == file)
     {
         printf("[-] Failed to open file\n");
         printf("[-] GLE: %u\n", ::GetLastError());
         return STATUS_FAILURE_I;
     }
 
+    auto file_size = LARGE_INTEGER{};
+
     // query the file size
-    if (!::GetFileSizeEx(hFile, &fileSize))
+    if (!::GetFileSizeEx(file, &file_size))
     {
         printf("[-] Failed to query file size\n");
         printf("[-] GLE: %u\n", ::GetLastError());
-        ::CloseHandle(hFile);
+        ::CloseHandle(file);
         return STATUS_FAILURE_I;
     }
 
-    // compute the size of individual read operations
-    readSize = fileSize.QuadPart / N_OPERATIONS;
+    // compute the necessary number of read operations
+    unsigned long long const n_operations 
+        = file_size.QuadPart / CHUNKSIZE + 1;
+
+    // we could easily scale the chunksize to handle these cases,
+    // but not going to bother for this simple example
+    if (n_operations > MAXIMUM_WAIT_OBJECTS)
+    {
+        printf("[-] Greater than MAXIMUM_WAIT_OBJECTS operations required, sorry!\n");
+        ::CloseHandle(file);
+        return STATUS_FAILURE_I;
+    }
 
     // allocate a buffer into which file contents may be read
     // we don't actually do anything with the contents, but one may
     // imagine that arbitrary processing may be performed once
     // the file contents are available after the IO completes
-    auto buffer = ::HeapAlloc(::GetProcessHeap(), NULL, fileSize.QuadPart);
-    if (NULL == buffer)
-    {
-        printf("[-] Failed to allocate read buffer\n");
-        printf("[-] GLE: %u\n", ::GetLastError());
-        ::CloseHandle(hFile);
-        return STATUS_FAILURE_I;
-    }
+    auto buffer = std::make_unique<char[]>(file_size.QuadPart);
+
+    auto contexts = std::make_unique<OVERLAPPED[]>(n_operations);
+    auto events   = std::make_unique<HANDLE[]>(n_operations);
     
     // track current position in the file
-    LARGE_INTEGER position{};
-    position.QuadPart = 0;
+    auto position = LARGE_INTEGER{};
 
     // issue the read operations
-    for (auto i = 0; i < N_OPERATIONS; ++i)
-    {
-        HANDLE hEvent = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    for (auto i = 0; i < n_operations; ++i)
+    {        
+        auto ev = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
         
-        events[i] = hEvent;
+        events[i] = ev;
 
-        contexts[i].hEvent     = hEvent;
+        contexts[i].hEvent     = ev;
         contexts[i].Offset     = position.LowPart;
         contexts[i].OffsetHigh = position.HighPart;
 
         // issue the overlapped read operation
         ::ReadFile(
-            hFile,
-            static_cast<CHAR*>(buffer) 
+            file,
+            static_cast<char*>(buffer.get()) 
                 + position.QuadPart,
-            readSize,
+            CHUNKSIZE,
             nullptr,
             &contexts[i]
         );
 
-        position.QuadPart += readSize;
+        position.QuadPart += CHUNKSIZE;
     }
 
     // continue waiting for results until all have completed
-    while (completed < N_OPERATIONS)
+    while (ops_completed < n_operations)
     {
-        DWORD         nBytesRead;
-        LARGE_INTEGER offset{};
+        auto bytes_read = unsigned long{};
+        auto offset     = LARGE_INTEGER{};
 
         auto i = ::WaitForMultipleObjects(
-            N_OPERATIONS,
-            events,
+            static_cast<unsigned long>(n_operations),  // explicit narrow
+            events.get(),
             FALSE,
-            INFINITE
-            );
+            INFINITE);
         
         if (i == WAIT_FAILED)
         {
@@ -134,9 +129,9 @@ INT wmain(INT argc, WCHAR* argv[])
         auto index = i - WAIT_OBJECT_0;
 
         ::GetOverlappedResult(
-            hFile,
+            file,
             &contexts[index],
-            &nBytesRead,
+            &bytes_read,
             FALSE
             );
 
@@ -145,14 +140,13 @@ INT wmain(INT argc, WCHAR* argv[])
 
         printf("[Read Complete]\n\tOffset: %llu\n\tBytes:  %u\n",
             offset.QuadPart,
-            nBytesRead
+            bytes_read
             );
 
-        completed++;
+        ops_completed++;
     }
 
-    ::HeapFree(::GetProcessHeap(), NULL, buffer);
-    ::CloseHandle(hFile);
+    ::CloseHandle(file);
 
     return STATUS_SUCCESS_I;
 }

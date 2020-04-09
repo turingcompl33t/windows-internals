@@ -3,3 +3,5 @@
 
 del /S .\*.exe
 del /S .\*.obj
+del /S .\*.ilk
+del /S .\*.pdb
