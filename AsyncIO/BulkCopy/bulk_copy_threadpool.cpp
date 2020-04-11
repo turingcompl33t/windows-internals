@@ -26,8 +26,8 @@ constexpr const auto STATUS_FAILURE_I = 0x1;
 
 constexpr const auto CHUNKSIZE = 1 << 16;
 
-using event = wdl::synchronization::event;
-using event_type = wdl::synchronization::event_type;
+using event          = wdl::synchronization::event;
+using event_type     = wdl::synchronization::event_type;
 using invalid_handle = wdl::handle::invalid_handle;
 
 event                g_done_event{event_type::manual_reset};
@@ -63,6 +63,8 @@ struct IoContext : OVERLAPPED
 };
 
 void read_completion_handler(
+    PTP_CALLBACK_INSTANCE,
+    void*,
     void*         ov, 
     unsigned long io_result, 
     ULONG_PTR     bytes_xfer, 
@@ -124,6 +126,8 @@ void read_completion_handler(
 } 
 
 void write_completion_handler(
+    PTP_CALLBACK_INSTANCE,
+    void*,
     void*         ov, 
     unsigned long io_result, 
     ULONG_PTR, 
@@ -191,9 +195,9 @@ unsigned long long register_all(
         
         // create IO objects for src and dst
         auto src_io = wdl::handle::io_handle { 
-            wdl::threadpool::create_io(pool, src.get(), read_completion_handler) };
+            wdl::threadpool::create_io(pool, src.get(), read_completion_handler, nullptr) };
         auto dst_io = wdl::handle::io_handle {
-            wdl::threadpool::create_io(pool, dst.get(), write_completion_handler) };
+            wdl::threadpool::create_io(pool, dst.get(), write_completion_handler, nullptr) };
 
         pair.size       = size.QuadPart;
         pair.src_handle = std::move(src);
