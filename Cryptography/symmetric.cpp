@@ -16,15 +16,17 @@ namespace crypto = wdl::crypto;
 
 int main()
 {   
-    auto secret  = crypto::to_bytes("some shared secret");
-    auto message = crypto::to_bytes("secure message");
+    auto const secret  = std::string{"some shared secret"};
+    auto const message = std::string{"secure message"};
 
-	auto shared = crypto::create_shared_secret(secret);
+	auto const shared = crypto::create_shared_secret(crypto::buffer(secret));
 
-	auto ciphertext = crypto::encrypt_message(shared, message);
-	auto plaintext  = crypto::decrypt_message(shared, ciphertext);
+	auto const ciphertext = crypto::encrypt_message(crypto::buffer(shared), crypto::buffer(message));
+	auto const plaintext  = crypto::decrypt_message(crypto::buffer(shared), crypto::buffer(ciphertext));
 
-	auto msg = crypto::from_bytes(plaintext);
+	auto msg = std::string(
+		reinterpret_cast<char*>(const_cast<crypto::byte_t*>(&plaintext[0])),
+		plaintext.size());
 
 	std::cout << msg << std::endl;
 }
