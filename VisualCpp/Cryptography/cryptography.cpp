@@ -12,8 +12,8 @@
 #include <string>
 #include <iostream>
 
-#include <wdl/debug.h>
-#include <wdl/unique_handle.h>
+#include <wdl/debug.hpp>
+#include <wdl/handle.hpp>
 
 using namespace Microsoft::WRL;
 

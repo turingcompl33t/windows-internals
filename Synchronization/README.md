@@ -271,3 +271,4 @@ In general, APCs are useful primitives for implementing _synchronous thread canc
 - _Windows System Programming, 4th Edition_ Pages 259-298
 - _Windows 10 System Programming_ Chapter 7
 - `WaitOnAddress()` [Blog Post](https://devblogs.microsoft.com/oldnewthing/20160823-00/?p=94145) 
+- [Windows with C++: The Evolution of Synchronization with Windows and C++](https://docs.microsoft.com/en-us/archive/msdn-magazine/2012/november/windows-with-c-the-evolution-of-synchronization-in-windows-and-c)
