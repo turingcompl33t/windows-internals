@@ -1,21 +1,19 @@
-// GuardPage.cpp
+// guard_page.cpp
+//
 // Demo of utilizing virtual memory API to create a guard page.
 //
 // Build:
-//  cl /EHsc /nologo GuardPage.cpp
-
-#define UNICODE
-#define _UNICODE
+//  cl /EHsc /nologo /std:c++17 /W4 guard_page.cpp
 
 #include <windows.h>
 #include <cstdio>
 
-constexpr auto STATUS_SUCCESS_I = 0x0;
-constexpr auto STATUS_FAILURE_I = 0x1;
+constexpr const auto STATUS_SUCCESS_I = 0x0;
+constexpr const auto STATUS_FAILURE_I = 0x1;
 
-INT main(VOID)
+int main()
 {
-    SYSTEM_INFO info;
+    auto info = SYSTEM_INFO{};
     ::GetSystemInfo(&info);
 
     auto dwPageSize              = info.dwPageSize;
@@ -24,12 +22,11 @@ INT main(VOID)
     printf("[+] Page Size: %u\n", dwPageSize);
     printf("[+] Allocation Granularity: %u\n", dwAllocationGranularity);
 
-    LPVOID ptr = ::VirtualAlloc(
+    auto ptr = ::VirtualAlloc(
         nullptr, 
         dwPageSize, 
         MEM_COMMIT | MEM_RESERVE, 
-        PAGE_READONLY | PAGE_GUARD
-        );
+        PAGE_READONLY | PAGE_GUARD);
     if (NULL == ptr)
     {
         printf("[-] Failed to allocate page (VirtualAlloc())\n");
@@ -49,7 +46,7 @@ INT main(VOID)
     // of the VirtualLock() call
 
     // attempt to lock the page
-    BOOL bLocked = ::VirtualLock(ptr, dwPageSize);
+    auto bLocked = ::VirtualLock(ptr, dwPageSize);
     if (!bLocked)
     {
         printf("[+] Failed to lock page on first attempt...\n");
