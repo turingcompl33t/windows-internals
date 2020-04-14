@@ -4,3 +4,6 @@
 [submodule "_Deps/CDL"]
 	path = _Deps/CDL
 	url = https://github.com/turingcompl33t/cdl.git
+[submodule "_Deps/Catch2"]
+	path = _Deps/Catch2
+	url = https://github.com/turingcompl33t/catch2-release.git
