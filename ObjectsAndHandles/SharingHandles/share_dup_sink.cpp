@@ -8,39 +8,47 @@
 #include <windows.h>
 #include <cstdio>
 
+constexpr const auto STATUS_SUCCESS_I = 0x0;
+constexpr const auto STATUS_FAILURE_I = 0x1;
+
 struct MESSAGE
 {
-    ULONG HandleValue;
+    unsigned long handle_num;
 };
 
-int main(int argc, char* argv[])
+int main()
 {
     puts("[SINK] Process started; reading from STDIN");
 
-    MESSAGE m;
+    auto m = MESSAGE{};
 
+    // read from stdin to determine handle number 
     if (!::ReadFile(
         ::GetStdHandle(STD_INPUT_HANDLE), 
         &m,
         sizeof(MESSAGE),
         nullptr,
-        nullptr
-        )
-    )
+        nullptr))
     {
         printf("[SINK] Failed to read from pipe; GLE: %u\n", ::GetLastError());
-        return 1;
+        return STATUS_FAILURE_I;
     }
 
-    printf("[SINK] Read handle value %u from pipe\n", m.HandleValue);
+    printf("[SINK] Read handle value %u from pipe\n", m.handle_num);
 
-    HANDLE hEvent = ::ULongToHandle(m.HandleValue);
-    if (!::SetEvent(hEvent))
+    // handle has been duplicated to our process, translate index to handle
+    auto event = ::ULongToHandle(m.handle_num);
+
+    if (!::SetEvent(event))
     {
         printf("[SINK] Failed to signal event; GLE: %u\n", ::GetLastError());
     }
+    else
+    {
+        puts("[SINK] Successfully signaled event; process exiting");
+    }
 
-    puts("[SINK] Successfully signaled event; process exiting");
+    ::CloseHandle(event);
 
-    return 0;
+    return STATUS_SUCCESS_I;
 }

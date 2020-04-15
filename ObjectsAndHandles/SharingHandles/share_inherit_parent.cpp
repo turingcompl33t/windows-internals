@@ -8,26 +8,28 @@
 #include <windows.h>
 #include <cstdio>
 
-int main(int argc, char* argv[])
+constexpr const auto STATUS_SUCCESS_I = 0x0;
+constexpr const auto STATUS_FAILURE_I = 0x1;
+
+constexpr const auto CMDLINE_BUFSIZE = 128;
+
+int main()
 {
-    HANDLE hEvent;
-    HANDLE hProcess;
-    WCHAR cmdline[128];
+    auto process_info = PROCESS_INFORMATION{};
+    auto startup_info = STARTUPINFOW{ sizeof(STARTUPINFOW) };
 
-    PROCESS_INFORMATION processInfo;
-    STARTUPINFO startupInfo = { sizeof(STARTUPINFO) };
-
-    SECURITY_ATTRIBUTES sa = { sizeof(SECURITY_ATTRIBUTES) };
+    auto sa = SECURITY_ATTRIBUTES{ sizeof(SECURITY_ATTRIBUTES) };
     sa.bInheritHandle = TRUE;
 
-    hEvent = ::CreateEventW(&sa, TRUE, FALSE, nullptr);
-    if (NULL == hEvent)
+    auto event = ::CreateEventW(&sa, TRUE, FALSE, nullptr);
+    if (NULL == event)
     {
         printf("[PARENT] Failed to create event; GLE: %u\n", ::GetLastError());
-        return 1;
+        return STATUS_FAILURE_I;
     }
 
-    swprintf(cmdline, L"ShareInheritChild.exe %u", ::HandleToULong(hEvent));
+    wchar_t cmdline[CMDLINE_BUFSIZE];
+    swprintf_s(cmdline, L"share_inherit_child.exe %u", ::HandleToULong(event));
 
     if (!::CreateProcessW(
         nullptr,
@@ -38,28 +40,25 @@ int main(int argc, char* argv[])
         0,
         nullptr,
         nullptr,
-        &startupInfo,
-        &processInfo
-        )
-    )
+        &startup_info,
+        &process_info))
     {
         printf("[PARENT] Failed to start child process; GLE: %u\n", ::GetLastError());
-        ::CloseHandle(hEvent);
-        return 1;
+        ::CloseHandle(event);
+        return STATUS_FAILURE_I;
     }
 
     printf("[PARENT] Successfully started child process; signaling event and waiting for child exit\n");
 
-    // event is manual reset
-    ::SetEvent(hEvent);
+    ::SetEvent(event);
 
-    ::WaitForSingleObject(processInfo.hProcess, INFINITE);
+    ::WaitForSingleObject(process_info.hProcess, INFINITE);
 
     printf("[PARENT] Child process exited; process exiting\n");
 
-    ::CloseHandle(processInfo.hThread);
-    ::CloseHandle(processInfo.hProcess);
-    ::CloseHandle(hEvent);
+    ::CloseHandle(process_info.hThread);
+    ::CloseHandle(process_info.hProcess);
+    ::CloseHandle(event);
 
-    return 0;
+    return STATUS_SUCCESS_I;
 }

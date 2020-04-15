@@ -8,120 +8,123 @@
 #include <windows.h>
 #include <cstdio>
 
+constexpr const auto STATUS_SUCCESS_I = 0x0;
+constexpr const auto STATUS_FAILURE_I = 0x1;
+
+constexpr const auto CMDLINE_BUFSIZE = 128;
+
 struct MESSAGE
 {
-    ULONG HandleValue;
+    unsigned long handle_num;
 };
 
-INT main(INT argc, PCHAR argv[])
+int main()
 {
-    HANDLE hReadPipe;
-    HANDLE hWritePipe;
-    SECURITY_ATTRIBUTES sa = { sizeof(SECURITY_ATTRIBUTES) };
+    auto read_pipe  = HANDLE{};
+    auto write_pipe = HANDLE{};
+    
+    auto sa = SECURITY_ATTRIBUTES{ sizeof(SECURITY_ATTRIBUTES) };
     sa.bInheritHandle = TRUE;
 
-    WCHAR SinkApp[] = L"ShareDuplicateSink.exe";
-
-    if (!::CreatePipe(&hReadPipe, &hWritePipe, &sa, 0))
+    if (!::CreatePipe(&read_pipe, &write_pipe, &sa, 0))
     {
-        printf("[SOURCE] Failed to create pipe; GLE: %u\n", GetLastError());
-        return 1;
+        printf("[SOURCE] Failed to create pipe; GLE: %u\n", ::GetLastError());
+        return STATUS_FAILURE_I;
     }
 
     puts("[SOURCE] Successfully created pipe");
 
-    PROCESS_INFORMATION ProcInfo;
+    auto process_info = PROCESS_INFORMATION{};
     
-    STARTUPINFO StartupInfo = { sizeof(STARTUPINFO) }; 
-    StartupInfo.dwFlags     = STARTF_USESTDHANDLES;
-    StartupInfo.hStdInput   = hReadPipe;
-    StartupInfo.hStdOutput  = ::GetStdHandle(STD_OUTPUT_HANDLE);
-    StartupInfo.hStdError   = ::GetStdHandle(STD_ERROR_HANDLE);
+    auto startup_info = STARTUPINFOW{ sizeof(STARTUPINFOW) }; 
+    startup_info.dwFlags     = STARTF_USESTDHANDLES;
+    startup_info.hStdInput   = read_pipe;
+    startup_info.hStdOutput  = ::GetStdHandle(STD_OUTPUT_HANDLE);
+    startup_info.hStdError   = ::GetStdHandle(STD_ERROR_HANDLE);
+
+    wchar_t cmdline[CMDLINE_BUFSIZE];
+    wcscpy_s(cmdline, L"share_dup_sink.exe");
 
     if (!::CreateProcessW(
         nullptr, 
-        SinkApp, 
+        cmdline, 
         nullptr, 
         nullptr, 
         TRUE,
         0,
         nullptr,
         nullptr,
-        &StartupInfo,
-        &ProcInfo
-        )
-    )
+        &startup_info,
+        &process_info))
     {
-        printf("[SOURCE] Failed to create process; GLE: %u\n", GetLastError());
-        return 1;
+        printf("[SOURCE] Failed to create process; GLE: %u\n", ::GetLastError());
+        return STATUS_FAILURE_I;
     }
 
     puts("[SOURCE] Successfully created sink process");
-    ::CloseHandle(ProcInfo.hThread);
+    ::CloseHandle(process_info.hThread);
+    ::CloseHandle(read_pipe);
 
     // create an event handle to duplicate
     // (creating an unnamed event here precludes the possibility
     //  of sharing via kernel object name)
-    HANDLE hEvent = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
-    if (NULL == hEvent)
+    auto event = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    if (NULL == event)
     {
-        printf("[SOURCE] Failed to create event object; GLE: %u\n", ::GetLastError());
-        return 1;
+        printf(
+            "[SOURCE] Failed to create event object; GLE: %u\n", 
+            ::GetLastError());
+        return STATUS_FAILURE_I;
     }
 
     printf(
         "[SOURCE] Successfully created event object; handle value %u\n", 
-        ::HandleToULong(hEvent)
-        );
+        ::HandleToULong(event));
 
     // duplicate the event handle to sink process
-    HANDLE hEventSink;
+    auto event_dup = HANDLE{};
     if (!::DuplicateHandle(
         GetCurrentProcess(), 
-        hEvent, 
-        ProcInfo.hProcess,
-        &hEventSink,
+        event, 
+        process_info.hProcess,
+        &event_dup,
         0,
         FALSE,
-        DUPLICATE_SAME_ACCESS
-        )
-    )
+        DUPLICATE_SAME_ACCESS))
     {
         printf(
             "[SOURCE] Failed to duplicate handle to sink process; GLE: %u\n", 
-            ::GetLastError()
-            );
-        return 1;
+            ::GetLastError());
+        return STATUS_FAILURE_I;
     }
 
-    printf("[SOURCE] Successfully duplicated handle to sink process\n");
+    printf(
+        "[SOURCE] Successfully duplicated handle to sink process; handle value %u\n", 
+        ::HandleToULong(event_dup));
 
     // communicate the handle value to sink process
-    MESSAGE m;
-    m.HandleValue = ::HandleToULong(hEventSink);
+    auto m = MESSAGE{};
+    m.handle_num = ::HandleToULong(event_dup);
 
     if (!::WriteFile(
-        hWritePipe, 
+        write_pipe, 
         &m, 
         sizeof(MESSAGE),
         nullptr,
-        nullptr
-        )
-    )
+        nullptr))
     {
         printf(
             "[SOURCE] Failed to communicate duped handle value to sink process; GLE: %u\n", 
-            GetLastError()
-            );
-        return 1;
+            ::GetLastError());
+        return STATUS_FAILURE_I;
     }
 
     puts("[SOURCE] Successfully communicated duped handle value to sink process");
     puts("[SOURCE] Waiting for sink process to signal event");
 
-    ::WaitForSingleObject(hEvent, INFINITE);
+    ::WaitForSingleObject(event, INFINITE);
 
     puts("[SOURCE] Sink process signaled event; exiting");
 
-    return 0;
+    return STATUS_SUCCESS_I;
 }

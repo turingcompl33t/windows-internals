@@ -7,35 +7,35 @@
 
 #include <windows.h>
 #include <cstdio>
-
 #include <string>
 
-int main(int argc, char* argv[])
+constexpr const auto STATUS_SUCCESS_I = 0x0;
+constexpr const auto STATUS_FAILURE_I = 0x1;
+
+int main(int, char* argv[])
 {
-    HANDLE hEvent;
-    ULONG UlongHandle;
+    auto handle_num = unsigned long{};
 
     try
     {
-        UlongHandle = std::stoul(argv[1]);
+        handle_num = std::stoul(argv[1]);
     }
-    catch(const std::exception& e)
+    catch(std::exception const&)
     {
-        // lazy error handling;
-        // std::stoul may throw invalid_argument
-        // or out_of_range exceptions
-
+        // std::stoul() may throw 
+        //  - std::invalid_argument
+        //  - std::out_of_range 
         printf("[CHILD] Failed to parse arguments\n");
-        return 1;
+        return STATUS_FAILURE_I;
     }
 
-    hEvent = ::ULongToHandle(UlongHandle);
+    auto event = ::ULongToHandle(handle_num);
 
     printf("[CHILD] Got handle to event; waiting for signal\n");
 
-    ::WaitForSingleObject(hEvent, INFINITE);
+    ::WaitForSingleObject(event, INFINITE);
 
     printf("[CHILD] Event signaled, exiting\n");
     
-    return 0;
+    return STATUS_SUCCESS_I;
 }

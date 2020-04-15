@@ -1,37 +1,38 @@
 // share_named_parent.cpp
 //
-// Demonstrates kernel object handle sharing by name.
+// Demonstrates kernel object handle sharing via named object.
 //
 // Build:
 //  cl /EHsc /nologo /std:c++17 /W4 share_named_parent.cpp
 
 #include <windows.h>
-
 #include <string>
 
-constexpr auto EventName = L"SharedNameEvent";
+constexpr const auto STATUS_SUCCESS_I = 0x0;
+constexpr const auto STATUS_FAILURE_I = 0x1;
+
+constexpr const auto CMDLINE_BUFSIZE = 128;
+
+constexpr const auto EVENT_NAME = L"SharedNameEvent";
 
 int main()
 {
-    HANDLE hEvent;
-    HANDLE hProcess;
-    WCHAR cmdline[128];
+    auto process_info = PROCESS_INFORMATION{};
+    auto startup_info = STARTUPINFOW{ sizeof(STARTUPINFOW) };
 
-    PROCESS_INFORMATION processInfo;
-    STARTUPINFO startupInfo = { sizeof(STARTUPINFO) };
-
-    SECURITY_ATTRIBUTES sa = { sizeof(SECURITY_ATTRIBUTES) };
+    auto sa = SECURITY_ATTRIBUTES{ sizeof(SECURITY_ATTRIBUTES) };
     sa.bInheritHandle = FALSE;
 
     // create a manual reset event
-    hEvent = ::CreateEventW(&sa, TRUE, FALSE, EventName);
-    if (NULL == hEvent)
+    auto event = ::CreateEventW(&sa, TRUE, FALSE, EVENT_NAME);
+    if (NULL == event)
     {
         printf("[PARENT] Failed to create event; GLE: %u\n", ::GetLastError());
-        return 1;
+        return STATUS_FAILURE_I;
     }
 
-    swprintf(cmdline, L"ShareNamedChild.exe");
+    wchar_t cmdline[CMDLINE_BUFSIZE];
+    swprintf_s(cmdline, L"share_named_child.exe");
 
     if (!::CreateProcessW(
         nullptr,
@@ -42,27 +43,25 @@ int main()
         0,
         nullptr,
         nullptr,
-        &startupInfo,
-        &processInfo
-        )
-    )
+        &startup_info,
+        &process_info))
     {
         printf("[PARENT] Failed to start child process; GLE: %u\n", ::GetLastError());
-        ::CloseHandle(hEvent);
-        return 1;
+        ::CloseHandle(event);
+        return STATUS_FAILURE_I;
     }
 
     printf("[PARENT] Successfully started child process; signaling event and waiting for child exit\n");
 
-    ::SetEvent(hEvent);
+    ::SetEvent(event);
 
-    ::WaitForSingleObject(processInfo.hProcess, INFINITE);
+    ::WaitForSingleObject(process_info.hProcess, INFINITE);
 
     puts("[PARENT] Child process completed; process exiting");
 
-    ::CloseHandle(processInfo.hProcess);
-    ::CloseHandle(processInfo.hThread);
-    ::CloseHandle(hEvent);
+    ::CloseHandle(process_info.hProcess);
+    ::CloseHandle(process_info.hThread);
+    ::CloseHandle(event);
 
-    return 0;
+    return STATUS_SUCCESS_I;
 }
