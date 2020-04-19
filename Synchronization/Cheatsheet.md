@@ -1,6 +1,6 @@
 ## Windows Synchronization Cheatsheet (Win32)
 
-The Win32 API offers a formidable number of synchronization primitives. We all need a little help remembering them all every now and then.
+The Win32 API offers a formidable number of synchronization primitives. We all need a little help every now and then deciding which one best suits our needs.
 
 ### Table of Contents
 
