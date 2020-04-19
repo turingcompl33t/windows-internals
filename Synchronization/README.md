@@ -264,7 +264,11 @@ In general, APCs are useful primitives for implementing _synchronous thread canc
 
 ### Waiting on a Specific Memory Location: `WaitOnAddress()`
 
+See the [Cheatsheet](./Cheatsheet.md)
+
 ### Synchronization Barriers
+
+See the [Cheatsheet](./Cheatsheet.md)
 
 ### References
 
