@@ -8,7 +8,7 @@
 #include <process.h>
 #include <stdio.h>
 
-constexpr const auto NTHREADS = 5;
+constexpr const auto N_THREADS = 5;
 
 constexpr const auto STATUS_SUCCESS_I = 0x0;
 constexpr const auto STATUS_FAILURE_I = 0x1;
@@ -31,38 +31,35 @@ unsigned __stdcall thread_proc(void* param)
 
 int main()
 {
-    HANDLE Handles[NTHREADS];
-    LPVOID Arguments[NTHREADS];
-
-    for (auto i = 0u; i < NTHREADS; ++i)
+    LPVOID arguments[N_THREADS];
+    for (auto i = 0u; i < N_THREADS; ++i)
     {
-        Arguments[i] = ::HeapAlloc(
+        arguments[i] = ::HeapAlloc(
             ::GetProcessHeap(), 
             HEAP_ZERO_MEMORY, 
-            sizeof(thread_arg_t)
-            );
+            sizeof(thread_arg_t));
 
-        static_cast<thread_arg_t*>(Arguments[i])->n = i;
+        static_cast<thread_arg_t*>(arguments[i])->n = i;
     }
 
-    for (auto i = 0u; i < NTHREADS; ++i)
+    HANDLE threads[N_THREADS];
+    for (auto i = 0u; i < N_THREADS; ++i)
     {
-        Handles[i] = (HANDLE) _beginthreadex(
+        threads[i] = (HANDLE) _beginthreadex(
             nullptr,
             0,
             thread_proc,
-            Arguments[i],
+            arguments[i],
             0,
-            nullptr
-            );
+            nullptr);
     }
 
     // wait for all threads to terminate
-    ::WaitForMultipleObjects(NTHREADS, Handles, TRUE, INFINITE);
+    ::WaitForMultipleObjects(N_THREADS, threads, TRUE, INFINITE);
 
-    for (auto i = 0u; i < NTHREADS; ++i)
+    for (auto i = 0u; i < N_THREADS; ++i)
     {
-        ::HeapFree(::GetProcessHeap(), 0, Arguments[i]);
+        ::HeapFree(::GetProcessHeap(), 0, arguments[i]);
     }
 
     return STATUS_SUCCESS_I;

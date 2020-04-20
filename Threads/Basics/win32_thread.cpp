@@ -8,7 +8,7 @@
 #include <tchar.h>
 #include <stdio.h>
 
-constexpr const auto NTHREADS = 5;
+constexpr const auto N_THREADS = 5;
 
 constexpr const auto STATUS_SUCCESS_I = 0x0;
 constexpr const auto STATUS_FAILURE_I = 0x1;
@@ -19,7 +19,7 @@ struct thread_arg_t
 };
 
 // thread entry point
-unsigned long WINAPI ThreadProc(void* param)
+unsigned long WINAPI thread_proc(void* param)
 {
     thread_arg_t* arg = static_cast<thread_arg_t*>(param);
     auto thread_id = ::GetCurrentThreadId();
@@ -31,29 +31,26 @@ unsigned long WINAPI ThreadProc(void* param)
 
 int main()
 {
-    HANDLE hThread;
-    HANDLE Handles[NTHREADS];
-    LPVOID Arguments[NTHREADS];
-
-    for (auto i = 0u; i < NTHREADS; ++i)
+    LPVOID arguments[N_THREADS];
+    for (auto i = 0u; i < N_THREADS; ++i)
     {
-        Arguments[i] = ::HeapAlloc(::GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(thread_arg_t));
-        thread_arg_t* arg = static_cast<thread_arg_t*>(Arguments[i]);
+        arguments[i] = ::HeapAlloc(::GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(thread_arg_t));
+        thread_arg_t* arg = static_cast<thread_arg_t*>(arguments[i]);
         arg->n = i;
     }
 
-    for (auto i = 0u; i < NTHREADS; ++i)
+    HANDLE threads[N_THREADS];
+    for (auto i = 0u; i < N_THREADS; ++i)
     {
-        hThread = ::CreateThread(NULL, 0, ThreadProc, Arguments[i], 0, NULL);
-        Handles[i] = hThread;
+        threads[i] = ::CreateThread(NULL, 0, thread_proc, arguments[i], 0, NULL);
     }
 
     // wait for all threads to terminate
-    ::WaitForMultipleObjects(NTHREADS, Handles, TRUE, INFINITE);
+    ::WaitForMultipleObjects(N_THREADS, threads, TRUE, INFINITE);
 
-    for (auto i = 0u; i < NTHREADS; ++i)
+    for (auto i = 0u; i < N_THREADS; ++i)
     {
-        ::HeapFree(::GetProcessHeap(), 0, Arguments[i]);
+        ::HeapFree(::GetProcessHeap(), 0, arguments[i]);
     }
 
     return STATUS_SUCCESS_I;
