@@ -33,10 +33,10 @@ int main(int argc, char* argv[])
     wchar_t name[MAX_NAME_LEN];
     mbstowcs_s(nullptr, name, argv[1], MAX_NAME_LEN-1);
 
-    auto count = long{};
+    auto count = unsigned long long{};
     try
     {
-        count = std::stol(argv[2]);
+        count = std::stoull(argv[2]);
     }
     catch (std::exception const&)
     {
