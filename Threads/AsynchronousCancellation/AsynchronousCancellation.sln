@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SupportDriver", "SupportDriver\SupportDriver.vcxproj", "{EF457C2C-98A9-4C25-92F8-06BFF537CF5C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client", "Client\Client.vcxproj", "{2309BE2E-49FA-450F-91FC-C0C5005F4209}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EF457C2C-98A9-4C25-92F8-06BFF537CF5C}.Debug|x64.ActiveCfg = Debug|x64
+		{EF457C2C-98A9-4C25-92F8-06BFF537CF5C}.Debug|x64.Build.0 = Debug|x64
+		{EF457C2C-98A9-4C25-92F8-06BFF537CF5C}.Debug|x64.Deploy.0 = Debug|x64
+		{EF457C2C-98A9-4C25-92F8-06BFF537CF5C}.Release|x64.ActiveCfg = Release|x64
+		{EF457C2C-98A9-4C25-92F8-06BFF537CF5C}.Release|x64.Build.0 = Release|x64
+		{EF457C2C-98A9-4C25-92F8-06BFF537CF5C}.Release|x64.Deploy.0 = Release|x64
+		{2309BE2E-49FA-450F-91FC-C0C5005F4209}.Debug|x64.ActiveCfg = Debug|x64
+		{2309BE2E-49FA-450F-91FC-C0C5005F4209}.Debug|x64.Build.0 = Debug|x64
+		{2309BE2E-49FA-450F-91FC-C0C5005F4209}.Release|x64.ActiveCfg = Release|x64
+		{2309BE2E-49FA-450F-91FC-C0C5005F4209}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C903B1F8-0A01-40C7-9861-E924C63A9288}
+	EndGlobalSection
+EndGlobal
