@@ -1,15 +1,16 @@
-// Application.cpp
+// client.cpp
+//
 // Demo application utilizing basic COM library. 
 //
-// Compile:
-// cl /EHsc /nologo Application.cpp
+// Build
+//  cl /EHsc /nologo /std:c++17 /W4 client.cpp
 
 // link with the COM library
-#pragma comment(lib, "Library.lib")
+#pragma comment(lib, "server.lib")
 
 #include <windows.h>
 
-#include "Library.h"
+#include "server.hpp"
 
 int main()
 {
@@ -34,7 +35,6 @@ int main()
     if (S_OK == base->QueryInterface(&derived))
     {
         derived->DerivedMethod();
-
         derived->Release();
     }
 

@@ -1,5 +1,6 @@
-// Library.h
-// Implementation of basic COM library.
+// server.hpp
+//
+// Implementation of basic COM server.
 
 #pragma once
 

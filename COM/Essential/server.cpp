@@ -1,13 +1,14 @@
-// Library.cpp
+// server.cpp
+//
 // Implementation of basic COM library.
 //
-// Compile:
-// cl /EHsc /nologo /LD Library.cpp
+// Build
+//  cl /EHsc /nologo /std:c++17 /W4 /LD server.cpp
 
 #include <windows.h>
 #include <iostream>
 
-#include "Library.h"
+#include "server.hpp"
 
 struct Instance : IDerived
 {
