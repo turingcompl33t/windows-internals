@@ -6,8 +6,8 @@
 
 #include "synchronization.hpp"
 
-constexpr auto const DEVICE_NAME = L"\\Device\\TrackingIrps";
-constexpr auto const SYMLINK_NAME = L"\\??\\TrackingIrps";
+constexpr auto const DEVICE_NAME = L"\\Device\\IrpTracker";
+constexpr auto const SYMLINK_NAME = L"\\??\\IrpTracker";
 
 constexpr auto const IRP_TRACKER_ALLOC_TAG = 0x11223344u;
 

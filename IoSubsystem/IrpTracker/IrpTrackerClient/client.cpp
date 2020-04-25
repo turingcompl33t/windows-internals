@@ -12,7 +12,7 @@
 constexpr auto const STATUS_SUCCESS_I = 0x0;
 constexpr auto const STATUS_FAILURE_I = 0x1;
 
-constexpr auto const SYMLINK_NAME = L"\\??\\TrackingIrps";
+constexpr auto const SYMLINK_NAME = L"\\??\\IrpTracker";
 
 constexpr auto const IRP_TRACKER_DEVICE = 0x8000;
 constexpr auto const IRP_TRACKER_IOCTL_ADD_PENDING
