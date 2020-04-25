@@ -1,8 +1,9 @@
-// StringSecurityDescriptor.cpp
+// string_security_descriptor.cpp
+//
 // Quick and dirty method to view security descriptor.
-
-#define UNICODE
-#define _UNICODE
+//
+// Build
+//  cl /EHsc /nologo /std:c++17 /W4 string_security_descriptor.cpp
 
 #include <windows.h>
 #include <sddl.h>
@@ -13,25 +14,24 @@
 constexpr auto STATUS_SUCCESS_I = 0x0;
 constexpr auto STATUS_FAILURE_I = 0x1;
 
-int wmain()
+int main()
 {
-    HANDLE token;
+    auto token = HANDLE{};
     if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &token))
     {
-        printf("[-] Failed to open process token\n");
-        printf("[-] GLE: %u\n", ::GetLastError());
+        ::printf("[-] Failed to open process token\n");
+        ::printf("[-] GLE: %u\n", ::GetLastError());
         return STATUS_FAILURE_I;
     }
 
-    DWORD requiredSize = 0;
+    auto required_size = 0ul;
 
-    ::GetTokenInformation(token, TokenDefaultDacl, NULL, 0, &requiredSize);
+    ::GetTokenInformation(token, TokenDefaultDacl, NULL, 0, &required_size);
 
-    auto* defaultDacl = reinterpret_cast<TOKEN_DEFAULT_DACL*>(
-        ::LocalAlloc(LPTR, requiredSize)
-    );
+    auto* default_dacl = reinterpret_cast<TOKEN_DEFAULT_DACL*>(
+        ::LocalAlloc(LPTR, required_size));
 
-    if (!defaultDacl)
+    if (!default_dacl)
     {
         printf("[-] Failed to allocate memory\n");
         printf("[-] GLE: %u\n", ::GetLastError());
@@ -39,26 +39,25 @@ int wmain()
         return STATUS_FAILURE_I;
     }
 
-    SECURITY_DESCRIPTOR sd;
-    LPTSTR stringSid;
+    auto sd = SECURITY_DESCRIPTOR{};
+    wchar_t* string_sid;
 
-    if (::GetTokenInformation(token, TokenDefaultDacl, defaultDacl, requiredSize, &requiredSize) &&
+    if (::GetTokenInformation(token, TokenDefaultDacl, default_dacl, required_size, &required_size) &&
         ::InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION) &&
-        ::SetSecurityDescriptorDacl(&sd, TRUE, defaultDacl->DefaultDacl, FALSE) &&
-        ::ConvertSecurityDescriptorToStringSecurityDescriptor(
+        ::SetSecurityDescriptorDacl(&sd, TRUE, default_dacl->DefaultDacl, FALSE) &&
+        ::ConvertSecurityDescriptorToStringSecurityDescriptorW(
             &sd,
             SDDL_REVISION_1, 
             DACL_SECURITY_INFORMATION, 
-            &stringSid, 
+            &string_sid, 
             NULL)
     ) 
     {
-        wprintf(stringSid);
-
-        ::LocalFree(stringSid);
+        ::wprintf(string_sid);
+        ::LocalFree(string_sid);
     }
 
-    ::LocalFree(defaultDacl);
+    ::LocalFree(default_dacl);
     ::CloseHandle(token);
 
     return STATUS_SUCCESS_I;

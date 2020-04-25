@@ -1,9 +1,6 @@
 // priviliges.hpp
 //
-// Messing with token privileges.
-//
-// Build
-//  cl /EHsc /nologo /std:c++17 /W4 /I %WIN_WORKSPACE%\_Deps\WDL\include privileges.cpp
+// Some general privilege management helpers.
 
 #pragma once
 
@@ -12,6 +9,18 @@
 #include <sddl.h>
 
 #include <memory>
+
+enum class account_privilege_action
+{
+    add,
+    remove
+};
+
+enum class privilege_action
+{
+    enable,
+    disable
+} ;
 
 constexpr bool NT_SUCCESS(NTSTATUS const status)
 {
@@ -55,26 +64,27 @@ NTSTATUS open_policy(
         server = &server_string;
     }
 
-    return NT_SUCCESS(
-        ::LsaOpenPolicy(
-            server,
-            &object_attrs,
-            desired_access,
-            policy_handle));
+    auto const status = ::LsaOpenPolicy(
+        server,
+        &object_attrs,
+        desired_access,
+        policy_handle);
+    
+    return status;
 }
 
 NTSTATUS set_account_privilege(
-    LSA_HANDLE policy, 
-    PSID       account_sid, 
-    wchar_t*   privilege_name, 
-    bool       enable
+    LSA_HANDLE               policy, 
+    PSID                     account_sid, 
+    wchar_t*                 privilege_name, 
+    account_privilege_action action
     )
 {
     auto privilege_string = LSA_UNICODE_STRING{};
     init_lsa_string(&privilege_string, privilege_name);
 
     auto status = NTSTATUS{};
-    if (enable) 
+    if (action == account_privilege_action::add) 
     {
         status = ::LsaAddAccountRights(
             policy, 
@@ -96,9 +106,9 @@ NTSTATUS set_account_privilege(
 }
 
 bool set_privilege(
-    HANDLE         token, 
-    wchar_t const* name, 
-    bool           enable
+    HANDLE           token, 
+    wchar_t const*   name, 
+    privilege_action action
     )
 {
 	auto luid       = LUID{};
@@ -112,7 +122,7 @@ bool set_privilege(
 	privileges.PrivilegeCount = 1;
 	privileges.Privileges[0].Luid = luid;
 
-    if (enable)
+    if (action == privilege_action::enable)
     {
 	    privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
     }
