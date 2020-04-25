@@ -62,10 +62,10 @@ int main(int argc, char* argv[])
     auto status = STATUS_SUCCESS_I;
     if (!set_privilege(
         this_token.get(), 
-        L"SeLockMemoryPrivilege", 
+        privilege_name, 
         privilege_action::enable))
     {
-        error("Failed to enable SeLockMemory");
+        error("Failed to enable privilege");
         status = STATUS_FAILURE_I;
     }
     else
