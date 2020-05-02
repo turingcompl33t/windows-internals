@@ -5,6 +5,7 @@
 
 #include <windows.h>
 #include <memory>
+#include <wrl.h>
 #include <ktmw32.h>
 #pragma comment(lib, "ktmw32")
 
@@ -12,23 +13,26 @@
 #define ASSERT ATLASSERT
 #define TRACE  ATLTRACE
 
+#include "hen.h"  // only necessary for remoting (MIDL generated)
 #include "com_server.hpp"
 
-// track total number of outstanding references
-static long s_serverLock;
+using namespace Microsoft::WRL;
 
-struct Hen : IHen
+// track total number of outstanding references
+static long g_server_lock;
+
+struct Hen : IHen, IAsyncHen
 {
 	long m_count;
 
 	Hen() : m_count{ 0 }
 	{
-		_InterlockedIncrement(&s_serverLock);
+		_InterlockedIncrement(&g_server_lock);
 	}
 
 	~Hen()
 	{
-		_InterlockedDecrement(&s_serverLock);
+		_InterlockedDecrement(&g_server_lock);
 	}
 
 	ULONG __stdcall AddRef() override
@@ -50,8 +54,8 @@ struct Hen : IHen
 
 	HRESULT __stdcall QueryInterface(
 		const IID& id,
-		void** result
-	) override
+		void**     result
+		) override
 	{
 		ASSERT(result);
 
@@ -59,6 +63,10 @@ struct Hen : IHen
 			id == __uuidof(IUnknown))
 		{
 			*result = static_cast<IHen*>(this);
+		}
+		else if (id == __uuidof(IAsyncHen))
+		{
+			*result = static_cast<IAsyncHen*>(this);
 		}
 		else
 		{
@@ -73,6 +81,28 @@ struct Hen : IHen
 	void __stdcall Cluck() override
 	{
 		TRACE(L"Cluck!\n");
+	}
+
+	HRESULT __stdcall SetEventHandler(IAsyncHenEventHandler* handler) override
+	{
+		ComPtr<IAsyncHenEventHandler> reference{handler};
+
+		auto const ok = ::TrySubmitThreadpoolCallback(
+			[](PTP_CALLBACK_INSTANCE, void* ctx)
+			{
+				ComPtr<IAsyncHenEventHandler> handler;
+				handler.Attach(static_cast<IAsyncHenEventHandler*>(ctx));
+
+				::Sleep(1000);
+
+				handler->OnCluck();
+			}, 
+			reference.Get(), 
+			nullptr);
+
+		if (ok) reference.Detach();
+
+		return ok ? S_OK : HRESULT_FROM_WIN32(::GetLastError());
 	}
 };
 
@@ -90,8 +120,8 @@ struct Hatchery : IClassFactory
 
 	HRESULT __stdcall QueryInterface(
 		const IID& id,
-		void** result
-	) override
+		void**     result
+		) override
 	{
 		ASSERT(result);
 
@@ -109,13 +139,13 @@ struct Hatchery : IClassFactory
 		return S_OK;
 	}
 
-	// CreateInstance
+	// CreateInstance()
 	// Required to implement IClassFactory.
 	HRESULT __stdcall CreateInstance(
-		IUnknown* outer,
+		IUnknown*  outer,
 		const IID& iid,
-		void** result
-	) override
+		void**     result
+		) override
 	{
 		ASSERT(result);
 		*result = nullptr;
@@ -134,30 +164,30 @@ struct Hatchery : IClassFactory
 		}
 
 		hen->AddRef();
-		auto hr = hen->QueryInterface(iid, result);
+		auto const hr = hen->QueryInterface(iid, result);
 		hen->Release();
 
 		return hr;
 	}
 
-	// LockServer
+	// LockServer()
 	// Required to implement IClassFactory.
 	HRESULT __stdcall LockServer(BOOL lock) override
 	{
 		if (lock)
 		{
-			_InterlockedIncrement(&s_serverLock);
+			_InterlockedIncrement(&g_server_lock);
 		}
 		else
 		{
-			_InterlockedDecrement(&s_serverLock);
+			_InterlockedDecrement(&g_server_lock);
 		}
 
 		return S_OK;
 	}
 };
 
-// DllGetClassObject
+// DllGetClassObject()
 HRESULT __stdcall DllGetClassObject(
 	const CLSID& clsid,
 	const IID& iid,
@@ -176,13 +206,13 @@ HRESULT __stdcall DllGetClassObject(
 	return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-// DllCanUnloadNow
+// DllCanUnloadNow()
 // Invoked by the runtime to determine if a particular
 // instance of this COM server may be unloaded from the
 // process in which it resides.
 HRESULT __stdcall DllCanUnloadNow()
 {
-	return s_serverLock ? S_FALSE : S_OK;
+	return g_server_lock ? S_FALSE : S_OK;
 }
 
 BOOL __stdcall DllMain(
