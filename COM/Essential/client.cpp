@@ -23,6 +23,7 @@ int main()
     }
 
     base->BaseMethodOne();
+    base->BaseMethodTwo();
 
     // if (S_OK == base->QueryInterface(
     //     __uuidof(IDerived),

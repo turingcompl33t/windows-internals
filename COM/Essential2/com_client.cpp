@@ -1,42 +1,60 @@
 // com_client.cpp
 //
 // Build
-//	cl /EHsc /nologo /std:c++17 /W4 /I %WIN_WORKSPACE%\_Deps\WDL\include com_client.cpp
+//	cl /EHsc /nologo /std:c++17 /W4 /I %WIN_WORKSPACE%\_Deps\WDL\include com_client.cpp /Fe:client.exe
 
 #include <wrl.h>
 #include <wdl/error/com_exception.hpp>
 
+#include <iostream>
+
+#include "hen.h"  // only necessary for remoting
 #include "com_server.hpp"
 
-using namespace wdl::error;
+namespace err = wdl::error;
 using namespace Microsoft::WRL;
 
-struct ComRuntime
+enum class apartment
 {
-	ComRuntime()
+	multithreaded = COINIT_MULTITHREADED,
+	singlethreaded = COINIT_APARTMENTTHREADED
+};
+
+struct com_runtime
+{
+	explicit com_runtime(apartment type = apartment::multithreaded)
 	{
-		check_com(::CoInitializeEx(
+		err::check_com(::CoInitializeEx(
 			nullptr,
-			COINITBASE_MULTITHREADED
-		));
+			static_cast<unsigned long>(type)));
 	}
 
-	~ComRuntime()
+	~com_runtime()
 	{
 		::CoUninitialize();
 	}
 };
 
-int main()
+struct event_handler : RuntimeClass<RuntimeClassFlags<ClassicCom>,
+								    IAsyncHenEventHandler>
 {
-	ComRuntime rt{};
+	HRESULT __stdcall OnCluck() override
+	{
+		std::cout << "Async Cluck!\n";
+		return S_OK;
+	}
+};
+
+void basics()
+{
+	com_runtime rt{};
 
 	ComPtr<IHen> hen;
 
 	/*
 	ComPtr<IClassFactory> hatchery;
 
-	check_com(::CoGetClassObject(
+	err::check_com(::CoGetClassObject(
 		__uuidof(Hen),
 		CLSCTX_INPROC_SERVER,
 		nullptr,
@@ -44,7 +62,7 @@ int main()
 		reinterpret_cast<void**>(hatchery.GetAddressOf())
 	));
 
-	check_com(hatchery->CreateInstance(
+	err::check_com(hatchery->CreateInstance(
 		nullptr,
 		__uuidof(hen),
 		reinterpret_cast<void**>(hen.GetAddressOf())
@@ -56,13 +74,12 @@ int main()
 	// code above but leverages the class factory interface
 	// to simplify the code
 
-	check_com(::CoCreateInstance(
+	err::check_com(::CoCreateInstance(
 		__uuidof(Hen),
 		nullptr,
 		CLSCTX_INPROC_SERVER,
 		__uuidof(hen),
-		reinterpret_cast<void**>(hen.GetAddressOf())
-		));
+		reinterpret_cast<void**>(hen.GetAddressOf())));
 
 	hen->Cluck();
 
@@ -86,4 +103,36 @@ int main()
 	// now, because all references have been released,
 	// the runtime can unload the server DLL from our process
 	::CoFreeUnusedLibrariesEx(0, 0);
+}
+
+int main()
+{
+	auto rt = com_runtime{apartment::singlethreaded};
+
+	ComPtr<IUnknown> hen{};
+
+	err::check_com(::CoCreateInstance(
+		__uuidof(Hen),
+		nullptr,
+		CLSCTX_INPROC_SERVER,
+		__uuidof(hen),
+		reinterpret_cast<void**>(hen.GetAddressOf())));
+
+	ComPtr<IHen> local{};
+
+	if (S_OK == hen.CopyTo(local.GetAddressOf()))
+	{
+		std::cout << "Local\n";
+	}
+
+	ComPtr<IAsyncHen> async{};
+
+	if (S_OK == hen.CopyTo(async.GetAddressOf()))
+	{
+		auto handler = Make<event_handler>();
+
+		err::check_com(async->SetEventHandler(handler.Get()));
+	}
+
+	::Sleep(INFINITE);
 }

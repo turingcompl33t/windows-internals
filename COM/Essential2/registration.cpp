@@ -26,7 +26,7 @@ enum class EntryOption
 struct Entry
 {
 	const wchar_t* Path;
-	EntryOption Option;
+	EntryOption    Option;
 	const wchar_t* Name;
 	const wchar_t* Value;
 };
@@ -100,7 +100,7 @@ static RegistryKey CreateRegistryKey(
 	return RegistryKey{ handle };
 }
 
-// OpenRegistryKey
+// OpenRegistryKey()
 // Wrapper around transactional registry API.
 // Returns unique handle wrapper around key handle.
 static RegistryKey OpenRegistryKey(
@@ -238,7 +238,7 @@ static bool Register(const Transaction& txn)
 	return true;
 }
 
-// DllRegisterServer
+// DllRegisterServer()
 // Exported for invocation by COM runtime.
 HRESULT __stdcall DllRegisterServer()
 {
@@ -265,7 +265,7 @@ HRESULT __stdcall DllRegisterServer()
 	return S_OK;
 }
 
-// DllUnregisterServer
+// DllUnregisterServer()
 // Exported for invocation by COM runtime. 
 HRESULT __stdcall DllUnregisterServer()
 {

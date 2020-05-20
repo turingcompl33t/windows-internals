@@ -10,10 +10,11 @@
 
 #include "server.hpp"
 
-struct Instance : IDerived
+class Instance : public IDerived
 {
     long m_count;
 
+public:
     Instance() : m_count{0}
     {
         std::cout << "Instance()\n";
@@ -86,7 +87,7 @@ struct Instance : IDerived
         std::cout << "BaseMethodTwo()\n";
     }
 
-    // IDervived interface implementation
+    // IDerived interface implementation
 
     void __stdcall DerivedMethod() override
     {

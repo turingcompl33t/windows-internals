@@ -1,0 +1,14 @@
+import "unknwn.idl";
+
+[object, uuid(f326d25b-ce6b-4806-944a-38145945f6ff)]
+interface IAsyncHenEventHandler : IUnknown
+{
+    HRESULT OnCluck();
+};
+
+[object, uuid(21a8e36a-0d14-463c-8c60-fbf4ff8c084a)]
+interface IAsyncHen : IUnknown
+{
+    HRESULT SetEventHandler(IAsyncHenEventHandler* handler);
+}
+
