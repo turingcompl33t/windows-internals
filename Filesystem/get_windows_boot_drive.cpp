@@ -1,9 +1,7 @@
-// get_partition_info.cpp
-//
-// NOTE: requires elevation
-//
+// get_windows_boot_drive.cpp
+// 
 // Build
-//  cl /EHsc /nologo /std:c++17 /W4 get_partition_info.cpp
+//  cl /EHsc /nologo /std:c++17 /W4 get_windows_boot_drive.cpp
 
 #include <windows.h>
 
@@ -102,64 +100,6 @@ std::optional<std::string> get_windows_physical_drive()
     return physical_drive_name;
 }
 
-[[nodiscard]]
-std::optional<PARTITION_INFORMATION_EX>
-get_disk_partition_info(std::string const& drive_name)
-{
-    auto partition_info = PARTITION_INFORMATION_EX{};
-
-    auto const drive_handle = ::CreateFileA(
-        drive_name.c_str(),
-        GENERIC_READ,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
-        nullptr,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        nullptr);
-    if (INVALID_HANDLE_VALUE == drive_handle)
-    {
-        error("Failed to acquire handle to drive");
-        return std::nullopt;
-    }
-
-    auto bytes_out = unsigned long{};
-    auto const ret = ::DeviceIoControl(
-        drive_handle,
-        IOCTL_DISK_GET_PARTITION_INFO_EX,
-        nullptr,
-        0,
-        &partition_info,
-        sizeof(partition_info),
-        &bytes_out,
-        nullptr);
-    if (!ret)
-    {
-        error("Failed to query drive partition information");
-        ::CloseHandle(drive_handle);
-        return std::nullopt;
-    }
-
-    ::CloseHandle(drive_handle);
-    return partition_info;
-}
-
-std::string partition_style_string(PARTITION_STYLE style)
-{
-    return [=](){
-        switch(style)
-        {
-        case PARTITION_STYLE_MBR:
-            return "MBR";
-        case PARTITION_STYLE_GPT:
-            return "GPT";
-        case PARTITION_STYLE_RAW:
-            return "RAW";
-        default:
-            return "UNRECOGNIZED";
-        }
-    }();
-}
-
 int main()
 {
     auto physical_drive_opt = get_windows_physical_drive();
@@ -171,36 +111,6 @@ int main()
     auto& physical_drive_name = physical_drive_opt.value();
     std::cout << "[+] Name of physical drive hosting current instance of Windows is: "
         << physical_drive_name << '\n';
-
-    auto const partition_info_opt = get_disk_partition_info(physical_drive_name);
-    if (!partition_info_opt.has_value())
-    {
-        return FAILURE;
-    }
-
-    auto& partition_info = partition_info_opt.value();
-    
-    std::cout << "[+] Disk Partition Style: " 
-        << partition_style_string(partition_info.PartitionStyle) << '\n';
-    std::cout << "[+] Partition Length: " 
-        << partition_info.PartitionLength.QuadPart << '\n';
-    std::cout << "[+] Partition Starting Offset: " 
-        << partition_info.StartingOffset.QuadPart << '\n';
-
-    if (PARTITION_STYLE_MBR == partition_info.PartitionStyle)
-    {
-        auto& mbr = partition_info.Mbr;
-        std::cout << "[+] MBR Partition Information:\n"
-            << "\tBoot Indicator: " << static_cast<unsigned>(mbr.BootIndicator) << '\n'
-            << "\tRecognized Partition: " << static_cast<unsigned>(mbr.RecognizedPartition) << '\n'
-            << "\tHidden Sectors: " << mbr.HiddenSectors << '\n';
-    }
-    else if (PARTITION_STYLE_GPT == partition_info.PartitionStyle)
-    {
-        // TODO
-        // auto& gpt = partition_info.Gpt;
-        std::cout << "[+] GPT Partition Information:\n";
-    }
 
     return SUCCESS;
 }
