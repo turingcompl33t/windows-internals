@@ -82,8 +82,8 @@ std::optional<std::string> get_windows_physical_drive()
     }
 
     // get the disk number from first returned disk extents structure
-    auto& extent = *reinterpret_cast<DISK_EXTENT*>(disk_extents.get());
-    auto const disk_number = extent.DiskNumber;
+    auto& extents = *reinterpret_cast<VOLUME_DISK_EXTENTS*>(disk_extents.get());
+    auto const disk_number = extents.Extents[0].DiskNumber;
 
     auto physical_drive = std::make_unique<char[]>(BUFFER_SIZE);
     SecureZeroMemory(physical_drive.get(), BUFFER_SIZE);
