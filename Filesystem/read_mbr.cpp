@@ -8,6 +8,8 @@
 
 #include <windows.h>
 
+#include <array>
+#include <vector>
 #include <cstdio>
 #include <string>
 #include <memory>
@@ -17,6 +19,21 @@
 
 constexpr static auto const SUCCESS = 0x0;
 constexpr static auto const FAILURE = 0x1;
+
+constexpr static std::array<BYTE, 5> FAT_TYPES = { 0x01, 0x04, 0x06, 0x0C, 0x0E };
+
+struct partition_meta
+{
+    BYTE  type;
+    DWORD lba_start;
+    DWORD size;
+
+    partition_meta(BYTE type_, DWORD lba_start_, DWORD size_)
+        : type{ type_ }, lba_start{ lba_start_ }, size{ size_ }
+    {}
+
+    ~partition_meta() = default;
+};
 
 #pragma pack(push, 1)
 struct MBR_PARTITION_TABLE_ENTRY
@@ -196,11 +213,22 @@ int main(int argc, char* argv[])
         return FAILURE;
     }
 
+    auto partitions = std::vector<partition_meta>{};
+
     std::cout << "[+] MBR is valid\n";
     for (auto i = 0u; i < 4; ++i)
     {
         auto& partition_entry = mbr.partition_table[i];
         dump_partition_info(partition_entry);
+        if (std::find(FAT_TYPES.cbegin(), FAT_TYPES.cend(), partition_entry.type) 
+            != std::end(FAT_TYPES))
+        {
+            std::cout << "[+] Found FAT partition\n";
+            partitions.emplace_back(
+                partition_entry.type, 
+                partition_entry.lba_first, 
+                partition_entry.size);
+        }
     }
 
     ::CloseHandle(drive);
