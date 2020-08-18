@@ -1,0 +1,2 @@
+#define LIBDIRECTSYSCALLS_API __declspec(dllexport)
+#define LIBDIRECTSYSCALLS_API __declspec(dllimport)
