@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.87
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HiveParserLib", "HiveParserLib\HiveParserLib.csproj", "{1C515B80-E1C9-4E66-89BE-5E92CD38FD55}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleClient", "ConsoleClient\ConsoleClient.csproj", "{F23BA471-7F9B-4A3E-BBB7-55A77E7FAB81}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1C515B80-E1C9-4E66-89BE-5E92CD38FD55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C515B80-E1C9-4E66-89BE-5E92CD38FD55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C515B80-E1C9-4E66-89BE-5E92CD38FD55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C515B80-E1C9-4E66-89BE-5E92CD38FD55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F23BA471-7F9B-4A3E-BBB7-55A77E7FAB81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F23BA471-7F9B-4A3E-BBB7-55A77E7FAB81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F23BA471-7F9B-4A3E-BBB7-55A77E7FAB81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F23BA471-7F9B-4A3E-BBB7-55A77E7FAB81}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5843B6B7-DC29-4FB8-9F75-772415663B5C}
+	EndGlobalSection
+EndGlobal

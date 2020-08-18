@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InjectorClient", "InjectorClient\InjectorClient.vcxproj", "{D2E375AA-FB90-4AE0-8AF6-E4E4EF5BDB8E}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InjectorLib", "InjectorLib\InjectorLib.vcxproj", "{EEF4089C-5A62-4729-8855-7913D6794BAF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestPayload", "TestPayload\TestPayload.vcxproj", "{3C8E968D-4839-4513-9B48-151D8B5DC479}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D2E375AA-FB90-4AE0-8AF6-E4E4EF5BDB8E}.Debug|x64.ActiveCfg = Debug|x64
+		{D2E375AA-FB90-4AE0-8AF6-E4E4EF5BDB8E}.Debug|x64.Build.0 = Debug|x64
+		{D2E375AA-FB90-4AE0-8AF6-E4E4EF5BDB8E}.Release|x64.ActiveCfg = Debug|x64
+		{D2E375AA-FB90-4AE0-8AF6-E4E4EF5BDB8E}.Release|x64.Build.0 = Debug|x64
+		{EEF4089C-5A62-4729-8855-7913D6794BAF}.Debug|x64.ActiveCfg = Debug|x64
+		{EEF4089C-5A62-4729-8855-7913D6794BAF}.Debug|x64.Build.0 = Debug|x64
+		{EEF4089C-5A62-4729-8855-7913D6794BAF}.Release|x64.ActiveCfg = Debug|x64
+		{EEF4089C-5A62-4729-8855-7913D6794BAF}.Release|x64.Build.0 = Debug|x64
+		{3C8E968D-4839-4513-9B48-151D8B5DC479}.Debug|x64.ActiveCfg = Debug|x64
+		{3C8E968D-4839-4513-9B48-151D8B5DC479}.Debug|x64.Build.0 = Debug|x64
+		{3C8E968D-4839-4513-9B48-151D8B5DC479}.Release|x64.ActiveCfg = Release|x64
+		{3C8E968D-4839-4513-9B48-151D8B5DC479}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D087C905-BDFA-4397-A53B-D117541E84F7}
+	EndGlobalSection
+EndGlobal
